@@ -14,7 +14,8 @@ const userSchema = new Schema({
   cart: {
     words: [
       {
-        wordId: { type: Schema.Types.ObjectId, ref: 'Wordef', required: true },
+        //wordId: { type: Schema.Types.ObjectId, ref: 'Wordef', required: true },
+        wordId: { type: String, ref: 'Wordef', required: true },
       }
     ]
   }

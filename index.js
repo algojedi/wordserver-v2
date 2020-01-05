@@ -44,27 +44,47 @@ app.get('/', async (req, res) => {
                 app_key : process.env.API_KEY
             }
         });
-        return res.send(wordObj.data);
+        //return res.send(wordObj.data);
+
+        const wordObjInfo = wordObj.data.results[0].lexicalEntries[0];
+
         //the first object in the senses array has all the good stuff
-        const definition = wordObj.data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0];
+
+        const definitions = []; //for storing 1+ definitions of a word
+
+        
+        wordObjInfo.entries[0].senses.forEach(def => {
+        console.log('examples array', def.examples);
+           definitions.push({   definition: def.definitions[0], 
+                                examples: def.examples.map(eg => {
+                                   { text: eg.text }
+                                }) }) 
+        });
+
+        //const definition = wordObjInfo.entries[0].senses[0].definitions[0];
+        
         //examples is an array with at least one object element
-        const examples = wordObj.data.results[0].lexicalEntries[0].entries[0].senses[0].examples;
-        const type = wordObj.data.results[0].lexicalEntries[0].lexicalCategory.text;
+        
+        //const examples = wordObjInfo.entries[0].senses[0].examples;
+        console.log('definitions array is ', definitions);
+
+        const type = wordObjInfo.lexicalCategory.text;
         //console.log('definition is ', typeof definition);
-        console.log('example is ', examples);
+        //console.log('example is ', examples);
         
         const wordDef = new Wordef({
             //_id: mongoose.Types.ObjectId(),
+            _id: word,
             word,
             type,
-            definition,
-            examples //is sometimes empty
+            definitions
+            
         });
-        wordDef.save().then(result => { //save() will save to DB
-            console.log(result)
-        }).catch(err => { console.log(err) })
+        // wordDef.save().then(result => { //save() will save to DB
+        //     console.log(result)
+        // }).catch(err => { console.log(err) })
 
-        res.send({ definition, examples, type });
+        res.send({ word, definitions, type });
     } catch (error) {
         console.error(error);
         res.send(400);
@@ -79,10 +99,10 @@ mongoose
         { useNewUrlParser: true, useUnifiedTopology: true })
     .then(result => {
         const user = new User({
-            name: 'Max',
+            name: 'Dax',
             email: 'max@test.com',
             cart: {
-                words: []
+                words: [{wordId: 'reserved'}]
             }
         });
         user.save();
