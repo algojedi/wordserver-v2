@@ -44,7 +44,7 @@ app.get('/', async (req, res) => {
                 app_key : process.env.API_KEY
             }
         });
-        //return res.send(wordObj.data);
+        
 
         const wordObjInfo = wordObj.data.results[0].lexicalEntries[0];
 
@@ -52,23 +52,26 @@ app.get('/', async (req, res) => {
 
         const definitions = []; //for storing 1+ definitions of a word
 
-        
-        wordObjInfo.entries[0].senses.forEach(def => {
-        console.log('examples array', def.examples);
-           definitions.push({   definition: def.definitions[0], 
-                                examples: def.examples
-                                    .filter()
-                                    .map(eg => {
-                                   { text: eg.text }
-                                }) }) 
-        });
 
-        //const definition = wordObjInfo.entries[0].senses[0].definitions[0];
+        //for each loops through senses array
+        wordObjInfo.entries[0].senses.filter(data => 'examples' in data)
+            .forEach(def => {
+                    //console.log('def is ', def);
+                    definitions.push({  definition: def.definitions[0], 
+                                        examples: def.examples.map(eg => {
+                                            return { text: eg.text }
+                                        }) 
+                                    }) 
+            });
+
+
+        
+        return res.send(definitions);
         
         //examples is an array with at least one object element
         
         //const examples = wordObjInfo.entries[0].senses[0].examples;
-        console.log('definitions array is ', definitions);
+        //console.log('definitions array is ', definitions);
 
         const type = wordObjInfo.lexicalCategory.text;
         //console.log('definition is ', typeof definition);
@@ -86,7 +89,7 @@ app.get('/', async (req, res) => {
         //     console.log(result)
         // }).catch(err => { console.log(err) })
 
-        res.send({ word, definitions, type });
+        //res.send({ word, definitions, type });
     } catch (error) {
         console.error(error);
         res.send(400);
@@ -100,14 +103,14 @@ mongoose
     .connect(`mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/test?retryWrites=true&w=majority`,
         { useNewUrlParser: true, useUnifiedTopology: true })
     .then(result => {
-        const user = new User({
-            name: 'Dax',
-            email: 'max@test.com',
-            cart: {
-                words: [{wordId: 'reserved'}]
-            }
-        });
-        user.save();
+        // const user = new User({
+        //     name: 'Dax',
+        //     email: 'max@test.com',
+        //     cart: {
+        //         words: [{wordId: 'reserved'}]
+        //     }
+        // });
+        // user.save();
         
         const PORT = process.env.PORT || 3001;
         app.listen(PORT, () => {
