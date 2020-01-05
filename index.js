@@ -56,7 +56,9 @@ app.get('/', async (req, res) => {
         wordObjInfo.entries[0].senses.forEach(def => {
         console.log('examples array', def.examples);
            definitions.push({   definition: def.definitions[0], 
-                                examples: def.examples.map(eg => {
+                                examples: def.examples
+                                    .filter()
+                                    .map(eg => {
                                    { text: eg.text }
                                 }) }) 
         });
