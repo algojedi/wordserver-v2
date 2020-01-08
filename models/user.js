@@ -9,17 +9,24 @@ const userSchema = new Schema({
   },
   email: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
-  cart: {
-    words: [
-      {
-        //wordId: { type: Schema.Types.ObjectId, ref: 'Wordef', required: true },
-        wordId: { type: String, ref: 'Wordef', required: true },
-      }
-    ]
-  }
+  
+  cart:  [  { type: Schema.Types.ObjectId, ref: 'Wordef' } ]
+        //wordId: { type: String, ref: 'Wordef', required: true },
+      
+  
+  // cart: {
+  //   words: [
+  //     {
+  //       wordId: { type: Schema.Types.ObjectId, ref: 'Wordef' },
+  //       //wordId: { type: String, ref: 'Wordef', required: true },
+  //     }
+  //   ]
+  // }
 });
+
 
 module.exports = mongoose.model('User', userSchema);
 
