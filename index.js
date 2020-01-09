@@ -4,14 +4,43 @@ const path = require('path');
 const cors = require('cors');
 const axios = require('axios');
 const mongoose = require('mongoose');
+const authRoutes = require('./routes/auth');
+const session = require("express-session");
+
+//a pkg to facilitate storing sessions in mongo. ** returns a constructor:
+const MongoDBStore = require("connect-mongodb-session")(session); 
+
 require('dotenv').config();
+
+
+const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/test?retryWrites=true&w=majority`;
+//removed from uri: ?retryWrites=true&w=majority
 
 const app = express();
 
+
+const store = new MongoDBStore({
+    uri: MONGO_URI,
+    collection: "sessions" //will be stored in mongodb
+    //expires -- optional
+});
+
+
+app.use(   //MUST be applied before setting routes
+    session({
+        secret: "my secret", //used to hash id 
+        resave: false, //only resave after changes
+        saveUninitialized: false,
+        store: store
+    })
+    );
+    
 app.use(cors());
 app.use(bodyParser.json());
-
+app.use(authRoutes);
+    
 const API_URL = 'https://od-api.oxforddictionaries.com/api/v2/entries/en-gb/';
+
 
 const Wordef = require('./models/wordef');
 const User = require('./models/user');
@@ -30,6 +59,7 @@ const fetchWordInfo = async word => {
             return null
         }
 
+        //first object in lexicalEntries array contains word definitions and examples
         const wordInfo = wordObject.data.results[0].lexicalEntries[0];
         const definitions = []; //for storing 1+ definitions of a word
 
@@ -49,12 +79,13 @@ const fetchWordInfo = async word => {
         console.log('successful word retrieval: ', definitions);
         return { word, type, definitions }
 
-
     }
     catch (err) {
         console.log('error when fetching for api', err)
     }
 }
+
+
 
 
 app.get('/define', async (req, res) => {
@@ -87,6 +118,15 @@ app.get('/define', async (req, res) => {
 
 })
 
+
+//temp route to act as root
+app.get('/home', (req, res) => {
+    return res.send('<h1>Hello other there!</h1>')
+
+})
+
+
+
 app.get('/getDefs', async (req, res) => {
     Wordef.find()  //find returns an array, NOT a cursor - .cursor() would
     .then(defs => {
@@ -117,7 +157,6 @@ app.get('/', async (req, res) => {
         const wordObjInfo = wordObj.data.results[0].lexicalEntries[0];
 
         //the first object in the senses array has all the good stuff
-
         const definitions = []; //for storing 1+ definitions of a word
 
 
@@ -169,12 +208,12 @@ app.get('/', async (req, res) => {
 
 
         //----------creating new user -------------
-        const user = new User({
-            name: 'Jerome',
-            email: 'max@test.com',
-            cart:  [wid]
-        });
-        user.save(); 
+        // const user = new User({
+        //     name: 'Jerome',
+        //     email: 'max@test.com',
+        //     cart:  [wid]
+        // });
+        // user.save(); 
         //---------------------------------------
 
 
@@ -191,7 +230,7 @@ app.get('/', async (req, res) => {
 
 
 mongoose
-    .connect(`mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/test?retryWrites=true&w=majority`,
+    .connect(MONGO_URI,
         { useNewUrlParser: true, useUnifiedTopology: true })
     .then(result => {
         
