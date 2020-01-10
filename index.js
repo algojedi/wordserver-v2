@@ -27,14 +27,30 @@ const store = new MongoDBStore({
 
 
 app.use(   //MUST be applied before setting routes
-    session({
+    session({ //takes care of all cookie setting and parsing
         secret: "my secret", //used to hash id 
         resave: false, //only resave after changes
         saveUninitialized: false,
         store: store
+        //cookie: { someKey: someVal }
     })
-    );
-    
+);
+
+//user saved in session upon login is not a mongoose recognizable model (has no methods)
+//we retrieve the model via user._id
+app.use((req, res, next) => {
+  if (!req.session.user) {
+    return next();
+  }
+  User.findById(req.session.user._id)
+    .then(user => {
+      req.user = user;
+      next();
+    })
+    .catch(err => console.log(err));
+});
+
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(authRoutes);
@@ -137,6 +153,7 @@ app.get('/getDefs', async (req, res) => {
 
 })
 
+
 app.get('/', async (req, res) => {
     const word = req.query.word;
 
@@ -209,17 +226,21 @@ app.get('/', async (req, res) => {
 
         //----------creating new user -------------
         // const user = new User({
-        //     name: 'Jerome',
-        //     email: 'max@test.com',
+        //     name: 'Jeromy',
+        //     email: 'max@testu.com',
         //     cart:  [wid]
         // });
-        // user.save(); 
+        
+        // user.save(function (err, user) {
+        //     return err ? res.status(400).send('Could not create user') :
+        //     res.status(200).send('successfully created new user')
+        // })
         //---------------------------------------
 
 
         // }).catch(err => { console.log(err) })
 
-        res.send({ word, definitions, type });
+        //res.send({ word, definitions, type });
     } catch (error) {
         console.error(error);
         res.send(400);

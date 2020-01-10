@@ -1,9 +1,14 @@
 const mongoose = require('mongoose');
+const uniqueValidator = require('mongoose-unique-validator');
 
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
   name: {
+    type: String,
+    required: true
+  },
+  password: {
     type: String,
     required: true
   },
@@ -14,19 +19,10 @@ const userSchema = new Schema({
   },
   
   cart:  [  { type: Schema.Types.ObjectId, ref: 'Wordef' } ]
-        //wordId: { type: String, ref: 'Wordef', required: true },
-      
   
-  // cart: {
-  //   words: [
-  //     {
-  //       wordId: { type: Schema.Types.ObjectId, ref: 'Wordef' },
-  //       //wordId: { type: String, ref: 'Wordef', required: true },
-  //     }
-  //   ]
-  // }
 });
 
+userSchema.plugin(uniqueValidator);
 
 module.exports = mongoose.model('User', userSchema);
 
