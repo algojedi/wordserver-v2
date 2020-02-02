@@ -5,10 +5,10 @@ const cors = require('cors');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
-const session = require("express-session");
+//const session = require("express-session");
 
 //a pkg to facilitate storing sessions in mongo. ** returns a constructor:
-const MongoDBStore = require("connect-mongodb-session")(session); 
+//const MongoDBStore = require("connect-mongodb-session")(session); 
 
 require('dotenv').config();
 
@@ -18,37 +18,22 @@ const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@clust
 
 const app = express();
 
-
-const store = new MongoDBStore({
-    uri: MONGO_URI,
-    collection: "sessions" //will be stored in mongodb
-    //expires -- optional
-});
-
-
-app.use(   //MUST be applied before setting routes
-    session({ //takes care of all cookie setting and parsing
-        secret: "my secret", //used to hash id 
-        resave: false, //only resave after changes
-        saveUninitialized: false,
-        store: store
-        //cookie: { someKey: someVal }
-    })
-);
-
 //user saved in session upon login is not a mongoose recognizable model (has no methods)
 //we retrieve the model via user._id
-app.use((req, res, next) => {
-  if (!req.session.user) {
-    return next();
-  }
-  User.findById(req.session.user._id)
-    .then(user => {
-      req.user = user;
-      next();
-    })
-    .catch(err => console.log(err));
-});
+
+///TODO: This method is needed!?
+
+// app.use((req, res, next) => {
+//   if (!req.session.user) {
+//     return next();
+//   }
+//   User.findById(req.session.user._id)
+//     .then(user => {
+//       req.user = user;
+//       next();
+//     })
+//     .catch(err => console.log(err));
+// });
 
 
 app.use(cors());
@@ -102,8 +87,6 @@ const fetchWordInfo = async word => {
 }
 
 
-
-
 app.get('/define', async (req, res) => {
     const word = req.query.word;
 
@@ -129,9 +112,6 @@ app.get('/define', async (req, res) => {
         console.error(error);
         res.send(400);
     }
-
-
-
 })
 
 
@@ -141,19 +121,30 @@ app.get('/home', (req, res) => {
 
 })
 
+app.get('/getCart', async (req, res) => {
+  const userId = "5e1cbaed7f37fe29f8f2aaf8";    //user Jake in db
+  user = await User.findById(userId);
+  if (!user) {
+      return res.status(400).json('unable to find user in addWord route')
+  } 
+//   User.
+//   findOne({ _id : user._id })
+//   .populate('cart.wordId') // only works if we pushed refs to children
+//   .exec(function (err, person) {
+//     if (err) {
+//         return console.log(err);
+//     } 
+//     console.log(person);
+//   })
+  
+  user
+    .populate('cart._Id') //does not return a Promise
+    .execPopulate() //does return a Promise
+    .then(user => res.json(user.cart))
+    .catch(err => console.log(err));
+});
 
-
-app.get('/getDefs', async (req, res) => {
-    Wordef.find()  //find returns an array, NOT a cursor - .cursor() would
-    .then(defs => {
-        console.log(defs);
-        res.send(defs);
-    })
-    .catch(err => console.log(err))
-
-})
-
-
+//takes in a word as a parameter
 app.get('/', async (req, res) => {
     const word = req.query.word;
 
@@ -191,10 +182,10 @@ app.get('/', async (req, res) => {
         const type = wordObjInfo.lexicalCategory.text;
         
             // --- id for zestful word object
-        console.log('finding zestful word object');
-        const wobj = await Wordef.findOne({ word: 'zestful' });
-        const wid = wobj._id;
-        console.log(wid);
+        // console.log('finding zestful word object');
+        // const wobj = await Wordef.findOne({ word: 'zestful' });
+        // const wid = wobj._id;
+        // console.log(wid);
             // -----------------------
 
 
@@ -205,10 +196,7 @@ app.get('/', async (req, res) => {
         //         console.log('The word is ', person.cart[0].definitions[0].examples)
         //     });
             
-        
-            
-
-
+    
 
         // ---------- creating new word ------------
         // const wordDef = new Wordef({
@@ -223,31 +211,59 @@ app.get('/', async (req, res) => {
         //     console.log(result)
             // -------------------------------
 
-
-        //----------creating new user -------------
-        // const user = new User({
-        //     name: 'Jeromy',
-        //     email: 'max@testu.com',
-        //     cart:  [wid]
-        // });
-        
-        // user.save(function (err, user) {
-        //     return err ? res.status(400).send('Could not create user') :
-        //     res.status(200).send('successfully created new user')
-        // })
-        //---------------------------------------
-
-
-        // }).catch(err => { console.log(err) })
-
-        //res.send({ word, definitions, type });
-    } catch (error) {
+    } catch(error) {
         console.error(error);
         res.send(400);
     }
     
 });
 
+app.post('/removeWord', async (req, res) => {
+  const userId = "5e1cbaed7f37fe29f8f2aaf8";    //user Jake in db
+  user = await User.findById(userId);
+  if (!user) {
+      return res.status(400).json('unable to find user in addWord route')
+  } 
+
+  const wordId = req.body.wordId;
+  try {
+      const word = await Wordef.findById(wordId);
+      if (word) {
+          user.removeFromCart(word._id); //argument must be of type ObjectID
+          res.json('removed from cart');   
+      } else {
+          res.json("word not found in cart");   
+      }
+  }
+  catch(e) {
+      console.log('error in route remove word', e);
+      res.send(400);
+  }
+})
+
+
+app.post('/addWord', async (req, res) => {
+  const userId = "5e1cbaed7f37fe29f8f2aaf8";    //user Jake in db
+  user = await User.findById(userId);
+  if (!user) {
+      return res.status(400).json('unable to find user in addWord route')
+  }
+  
+  const wordId = req.body.wordId;
+  try {
+      const word = await Wordef.findById(wordId);
+      if (word) {
+          user.addToCart(word._id); //should be req.user.add....
+          res.json('added word to cart');   
+      } else {
+          res.json("word already in cart");   
+      }
+  }
+  catch(e) {
+      console.log('error in route adding word', e);
+      res.send(400);
+  }
+});
 
 
 mongoose

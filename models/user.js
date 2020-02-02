@@ -17,10 +17,46 @@ const userSchema = new Schema({
     required: true,
     unique: true
   },
-  
-  cart:  [  { type: Schema.Types.ObjectId, ref: 'Wordef' } ]
+
+  //cart:  [ { wordId : { type: Schema.Types.ObjectId, ref: 'Wordef' } } ]
+  cart:  [ { type: Schema.Types.ObjectId, ref: 'Wordef' } ]
+
   
 });
+
+
+//wordId to be of type ObjectId 
+userSchema.methods.addToCart = function(wordId) { 
+  
+  const cartWordIndex = this.cart.findIndex(cw => {  //check to see if word is already in cart
+    return cw.wordId.toString() === wordId.toString();
+  });
+  //return early if word already exists in cart
+  if (cartWordIndex >= 0) {
+    console.log('word already exists in cart');
+    return;
+  }
+  const updatedCart = [...this.cart];
+  updatedCart.push(wordId);
+  console.log('updated cart: ', updatedCart);
+  this.cart = updatedCart;
+  return this.save();
+}
+
+//wordId to be of type ObjectId
+userSchema.methods.removeFromCart = function(wordId) {
+  const updatedCartItems = this.cart.filter(wordRef => {
+    return wordRef.toString() !== wordId.toString();
+  });
+  this.cart = updatedCartItems;
+  return this.save();
+};
+
+userSchema.methods.clearCart = function() {
+  this.cart = [];
+  return this.save();
+};
+
 
 userSchema.plugin(uniqueValidator);
 
