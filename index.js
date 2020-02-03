@@ -46,6 +46,7 @@ const API_URL = 'https://od-api.oxforddictionaries.com/api/v2/entries/en-gb/';
 const Wordef = require('./models/wordef');
 const User = require('./models/user');
 
+//TODO: rewrite this method and rewrite WordDef model after creating new branch
 //function returns object containing all relevant word info in WordDef schema layout, or null if no match found
 const fetchWordInfo = async word => {
     try {
@@ -191,10 +192,6 @@ app.get('/', async (req, res) => {
             // -----------------------
 
 
-    
-            
-    
-
         // ---------- creating new word ------------
         // const wordDef = new Wordef({
         //     //_id: mongoose.Types.ObjectId(),
@@ -263,14 +260,13 @@ app.post('/addWord', async (req, res) => {
 });
 
 
-
+//TODO: cart does not empty in db
 app.get("/emptyCart", async (req, res) => {
   const userId = "5e1cbaed7f37fe29f8f2aaf8"; //user Jake in db
   user = await User.findById(userId);
   if (!user) {
     return res.status(400).json("unable to find user in addWord route");
   }
-
   try {
     
       user.clearCart(); 
