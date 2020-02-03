@@ -2,14 +2,8 @@ const express = require('express');
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-//const redis = require('redis')
 const Session = require('../models/session');
 
-
-// let client = redis.createClient();
-// client.on('connect', function() {
-//     console.log('redis connected...')
-// })
 
 //const authController = require('../controllers/auth');
 

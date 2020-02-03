@@ -54,6 +54,7 @@ userSchema.methods.removeFromCart = function(wordId) {
 
 userSchema.methods.clearCart = function() {
   this.cart = [];
+  console.log('in clear cart method')
   return this.save();
 };
 

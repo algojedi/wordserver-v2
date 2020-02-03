@@ -122,26 +122,28 @@ app.get('/home', (req, res) => {
 })
 
 app.get('/getCart', async (req, res) => {
-  const userId = "5e1cbaed7f37fe29f8f2aaf8";    //user Jake in db
+  const userId = "5e38399819864a04d8c90b44";    //user John Lennon in db
   user = await User.findById(userId);
   if (!user) {
       return res.status(400).json('unable to find user in addWord route')
   } 
-//   User.
-//   findOne({ _id : user._id })
-//   .populate('cart.wordId') // only works if we pushed refs to children
-//   .exec(function (err, person) {
-//     if (err) {
-//         return console.log(err);
-//     } 
-//     console.log(person);
-//   })
+  User.
+  findOne({ _id : user._id })
+  .populate('cart') // only works if we pushed refs to children
+  .exec(function (err, person) {
+    if (err) {
+        return console.log(err);
+    } 
+    console.log(person);
+    res.json(person.cart);
+  })
   
-  user
-    .populate('cart._Id') //does not return a Promise
-    .execPopulate() //does return a Promise
-    .then(user => res.json(user.cart))
-    .catch(err => console.log(err));
+//   user
+//     .populate('cart') //does not return a Promise
+//     .execPopulate() //does return a Promise
+//     .then(user => res.json(user.cart))
+//     .catch(err => console.log(err));
+// 
 });
 
 //takes in a word as a parameter
@@ -189,12 +191,7 @@ app.get('/', async (req, res) => {
             // -----------------------
 
 
-        // const doc = await User.findOne({ name: 'Jerome' })
-        //     .populate('cart')
-        //     .exec(function (err, person) {
-        //         if (err) { return console.log(err) }
-        //         console.log('The word is ', person.cart[0].definitions[0].examples)
-        //     });
+    
             
     
 
@@ -243,7 +240,7 @@ app.post('/removeWord', async (req, res) => {
 
 
 app.post('/addWord', async (req, res) => {
-  const userId = "5e1cbaed7f37fe29f8f2aaf8";    //user Jake in db
+  const userId = "5e38399819864a04d8c90b44";    //user Joh lennon in db
   user = await User.findById(userId);
   if (!user) {
       return res.status(400).json('unable to find user in addWord route')
@@ -253,7 +250,7 @@ app.post('/addWord', async (req, res) => {
   try {
       const word = await Wordef.findById(wordId);
       if (word) {
-          user.addToCart(word._id); //should be req.user.add....
+          user.addToCart(word._id); //should be of type ObjectID....
           res.json('added word to cart');   
       } else {
           res.json("word already in cart");   
@@ -262,6 +259,26 @@ app.post('/addWord', async (req, res) => {
   catch(e) {
       console.log('error in route adding word', e);
       res.send(400);
+  }
+});
+
+
+
+app.get("/emptyCart", async (req, res) => {
+  const userId = "5e1cbaed7f37fe29f8f2aaf8"; //user Jake in db
+  user = await User.findById(userId);
+  if (!user) {
+    return res.status(400).json("unable to find user in addWord route");
+  }
+
+  try {
+    
+      user.clearCart(); 
+      return res.json("emptied cart");
+    
+  } catch (e) {
+    console.log("error in route empty cart", e);
+    res.send(400);
   }
 });
 
