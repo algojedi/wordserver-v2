@@ -1,0 +1,8 @@
+TODO:
+
+The Wordef model needs to be changed to remove part from definitions and into main shit
+** Test /define route!!!
+
+----Feb 13 cleared databases!!!
+
+when returning user, also populate definitions array to return word definitions.

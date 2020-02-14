@@ -1,11 +1,10 @@
 const mongoose = require('mongoose')
 
-
+//defInfo must be seperate model because definition is tied to specific examples
 const defInfo = mongoose.Schema(
   {
     definition: { type: String, required: true },
-    //examples: { type: [{ _id: false, text: String }]}
-
+    part: { type: String, required: true }, //Part of Speech eg: noun, verb
     examples: [{ type: String }]
   },
   { _id: false }
@@ -14,9 +13,8 @@ const defInfo = mongoose.Schema(
 //TODO: combine the two schemas
 const wordefSchema = mongoose.Schema({
   //_id: mongoose.Schema.Types.ObjectId(),
-  word: { type: String, required: true },
-  type: { type: String, required: true },
-  definitions: {type: [defInfo], required: true }
+  word: { type: String, required: true, unique: true },
+  definitions: { type: [defInfo], required: true }
 });
 
 

@@ -7,9 +7,6 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 //const session = require("express-session");
 
-//a pkg to facilitate storing sessions in mongo. ** returns a constructor:
-//const MongoDBStore = require("connect-mongodb-session")(session); 
-
 require('dotenv').config();
 
 
@@ -46,46 +43,48 @@ const API_URL = 'https://od-api.oxforddictionaries.com/api/v2/entries/en-gb/';
 const Wordef = require('./models/wordef');
 const User = require('./models/user');
 
-//TODO: rewrite this method and rewrite WordDef model after creating new branch
+//TODO: rewrite this method 
+//this method only runs if the word is NOT in the database
 //function returns object containing all relevant word info in WordDef schema layout, or null if no match found
-const fetchWordInfo = async word => {
-    try {
-        const wordObject = await axios.get(API_URL + word, {
-            headers: {
-                app_id: process.env.APP_ID,
-                app_key: process.env.API_KEY
-            }
+const fetchWordData = async word => {
+  try {
+    const wordObject = await axios.get(API_URL + word, {
+      headers: {
+        app_id: process.env.APP_ID,
+        app_key: process.env.API_KEY
+      }
+    });
+    if ("error" in wordObject) {
+      console.log(wordObject.error);
+      return null;
+    }
+
+    //first object in lexicalEntries array contains word definitions and examples
+    const wordInfo = wordObject.data.results[0].lexicalEntries[0];
+    const definitions = []; //for storing 1+ definitions of a word
+    const examplesPerDef = []; //there could be multiple examples for each word definition
+    //loop through senses array to populate definitions
+    wordInfo.entries[0].senses
+      .filter(data => "examples" in data)
+      .forEach(def => {
+        //console.log('def is ', def);
+        def.examples.forEach(ex => examplesPerDef.push(ex.text)); //extract string from object
+        
+        definitions.push({
+          definition: def.definitions[0],
+          examples: examplesPerDef
+          })
         });
-        if ('error' in wordObject) {
-            console.log(wordObject.error)
-            return null
-        }
+      
 
-        //first object in lexicalEntries array contains word definitions and examples
-        const wordInfo = wordObject.data.results[0].lexicalEntries[0];
-        const definitions = []; //for storing 1+ definitions of a word
+    const part = wordInfo.lexicalCategory.text;
+    console.log("successful word retrieval: ", definitions);
+    return { word, part, definitions };
+  } catch (err) {
+    console.log("error when fetching for api", err);
+  }
+};
 
-        //loop through senses array to populate definitions
-        wordInfo.entries[0].senses.filter(data => 'examples' in data)
-            .forEach(def => {
-                //console.log('def is ', def);
-                definitions.push({
-                    definition: def.definitions[0],
-                    examples: def.examples.map(eg => {
-                        return { text: eg.text }
-                    })
-                })
-            });
-
-        const type = wordInfo.lexicalCategory.text;
-        console.log('successful word retrieval: ', definitions);
-        return { word, type, definitions }
-
-    }
-    catch (err) {
-        console.log('error when fetching for api', err)
-    }
-}
 
 
 app.get('/define', async (req, res) => {
@@ -100,20 +99,47 @@ app.get('/define', async (req, res) => {
         const wordQuery = await Wordef.findOne({ word });  //returns null if no matches
         if (wordQuery) { //return word definition if found in mongo
             console.log('word defs from mongodb: ', wordQuery.definitions);
+            //---TODO entire wordQuery object should be returned in order access 'part' field
             return res.send(wordQuery.definitions);
         }
 
         //not found in mongodb, therefor query api...
-        const wordInfo = await fetchWordInfo(word);
-
-        return res.send(wordInfo);
+        //const wordInfo = await fetchWordInfo(word);
+        const wordInfo = await fetchWordData(word);
+        
+        //store reference in DB
+        if (wordInfo) {
+            await addWordToDB(wordInfo);
+        }
+        return res.json(wordInfo); 
 
     }
     catch (error) {
         console.error(error);
-        res.send(400);
+        res.status(400).send();
     }
 })
+
+const addWordToDB = ({ word, part, definitions }) => {
+    try {
+        const wordDef = new Wordef({
+                word,
+                part,
+                definitions
+            });
+        wordDef.save()
+            .then(result => { //save() will save to DB
+                console.log('result from saving word to DB, ', result)
+                })
+
+    } catch(error) {
+        console.error(error);
+      }
+}
+
+
+
+
 
 
 //temp route to act as root
@@ -236,28 +262,7 @@ app.post('/removeWord', async (req, res) => {
 })
 
 
-app.post('/addWord', async (req, res) => {
-  const userId = "5e38399819864a04d8c90b44";    //user Joh lennon in db
-  user = await User.findById(userId);
-  if (!user) {
-      return res.status(400).json('unable to find user in addWord route')
-  }
-  
-  const wordId = req.body.wordId;
-  try {
-      const word = await Wordef.findById(wordId);
-      if (word) {
-          user.addToCart(word._id); //should be of type ObjectID....
-          res.json('added word to cart');   
-      } else {
-          res.json("word already in cart");   
-      }
-  }
-  catch(e) {
-      console.log('error in route adding word', e);
-      res.send(400);
-  }
-});
+// 
 
 
 //TODO: cart does not empty in db
@@ -291,3 +296,34 @@ mongoose
         })
     })
     .catch(err => { console.log(err) });
+
+
+
+
+
+
+
+
+
+//  app.post('/addWord', async (req, res) => {
+//   const userId = "5e38399819864a04d8c90b44";    //user Joh lennon in db
+//   user = await User.findById(userId);
+//   if (!user) {
+//       return res.status(400).json('unable to find user in addWord route')
+//   }
+  
+//   const wordId = req.body.wordId;
+//   try {
+//       const word = await Wordef.findById(wordId);
+//       if (word) {
+//           user.addToCart(word._id); //should be of type ObjectID....
+//           res.json('added word to cart');   
+//       } else {
+//           res.json("word already in cart");   
+//       }
+//   }
+//   catch(e) {
+//       console.log('error in route adding word', e);
+//       res.send(400);
+//   }
+// });
