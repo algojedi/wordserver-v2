@@ -86,7 +86,6 @@ const fetchWordData = async word => {
 };
 
 
-
 app.get('/define', async (req, res) => {
     const word = req.query.word;
 

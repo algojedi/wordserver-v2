@@ -4,17 +4,17 @@ const mongoose = require('mongoose')
 const defInfo = mongoose.Schema(
   {
     definition: { type: String, required: true },
-    part: { type: String, required: true }, //Part of Speech eg: noun, verb
     examples: [{ type: String }]
   },
   { _id: false }
-);
-
-//TODO: combine the two schemas
-const wordefSchema = mongoose.Schema({
-  //_id: mongoose.Schema.Types.ObjectId(),
-  word: { type: String, required: true, unique: true },
-  definitions: { type: [defInfo], required: true }
+  );
+  
+  //TODO: combine the two schemas
+  const wordefSchema = mongoose.Schema({
+    //_id: mongoose.Schema.Types.ObjectId(),
+    word: { type: String, required: true, unique: true },
+    definitions: { type: [defInfo], required: true },
+    part: { type: String, required: true } //Part of Speech eg: noun, verb
 });
 
 

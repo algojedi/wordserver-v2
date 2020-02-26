@@ -102,7 +102,7 @@ const handleSignIn = (req, res) => {
 
 
    
-
+// below is the method implemented using sessions
 // ---- below is the working route that doesn't use tokens----
 // router.post('/login', (req, res, next) => {
 //     const { email, password } = req.body;
@@ -195,7 +195,7 @@ router.get('/checkauth', (req, res, next) => {
 
 router.post('/register', async (req, res, next) => {
     const { name, email, password } = req.body;
-    
+    //first check if user already exists
     try { 
         const userDoc = await User.findOne({ email }) 
         if (userDoc) {

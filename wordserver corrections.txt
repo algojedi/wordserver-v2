@@ -4,5 +4,15 @@ The Wordef model needs to be changed to remove part from definitions and into ma
 ** Test /define route!!!
 
 ----Feb 13 cleared databases!!!
+//feb 25 - define seems to be working fine but need to only allow lowercase shit in db
+	- started to implement register.js from wordsapp
+		- its missing a functional handlesubmit
+
+feb 26 - /register route seems to be working but needs tokenization
+	- TODO: skip register token functuinality for now ***
+	- fixed client side to push to /main after registered
+	*** PROBLEM: client side has authenticated true afer successful registration
+		- but then how to validate again at sign in?
+			- solution is don't log in automatically after register
 
 when returning user, also populate definitions array to return word definitions.
