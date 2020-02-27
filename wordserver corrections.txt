@@ -14,5 +14,35 @@ feb 26 - /register route seems to be working but needs tokenization
 	*** PROBLEM: client side has authenticated true afer successful registration
 		- but then how to validate again at sign in?
 			- solution is don't log in automatically after register
+	- auth in client side needs to be changed
+		- have context keep track of userId, not user
+
+feb 27 - app.post("/addWordToCart", async (req, res) => 
+		- This route needs to be tested!! Be sure to include word in req body 
+
 
 when returning user, also populate definitions array to return word definitions.
+
+
+this needs to be implemented more widely in client side as well as ss
+const token = window.sessionStorage.getItem("token");
+    const url = "http://localhost:3001/login"; //TODO: change when deploying
+    const getUsrUrl = "http://localhost:3001/profile/"; //TODO: change when deploying
+
+    if (token) {
+      console.log(token)
+      // fetch(url, {
+      //   method: "post",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "Authorization": token
+      //   }
+      // })
+      axios({
+        url,
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token
+        }
+      })

@@ -62,18 +62,19 @@ const fetchWordData = async word => {
     //first object in lexicalEntries array contains word definitions and examples
     const wordInfo = wordObject.data.results[0].lexicalEntries[0];
     const definitions = []; //for storing 1+ definitions of a word
-    const examplesPerDef = []; //there could be multiple examples for each word definition
+    let examplesPerDef = []; //there could be multiple examples for each word definition
     //loop through senses array to populate definitions
     wordInfo.entries[0].senses
-      .filter(data => "examples" in data)
+      .filter(data => "examples" in data) //remove entries with no examples
       .forEach(def => {
         //console.log('def is ', def);
         def.examples.forEach(ex => examplesPerDef.push(ex.text)); //extract string from object
         
         definitions.push({
           definition: def.definitions[0],
-          examples: examplesPerDef
+          examples: [...examplesPerDef]
           })
+        examplesPerDef = [];
         });
       
 
@@ -88,18 +89,21 @@ const fetchWordData = async word => {
 
 app.get('/define', async (req, res) => {
     const word = req.query.word;
-
     if (!word) {
-        return res.send('<h3>Enter a word</h3>')
+        return res.json('Enter a word')
     }
-
     //check mongo if word is already stored
     try {
         const wordQuery = await Wordef.findOne({ word });  //returns null if no matches
-        if (wordQuery) { //return word definition if found in mongo
+        //return full word object if found in mongo
+        if (wordQuery) { 
             console.log('word defs from mongodb: ', wordQuery.definitions);
-            //---TODO entire wordQuery object should be returned in order access 'part' field
-            return res.send(wordQuery.definitions);
+            const { part, definitions } = wordQuery;
+            return res.send({
+                word, 
+                part,
+                definitions
+            })
         }
 
         //not found in mongodb, therefor query api...
@@ -137,7 +141,30 @@ const addWordToDB = ({ word, part, definitions }) => {
 }
 
 
-
+app.post("/addWordToCart", async (req, res) => {
+  
+    const { authorization } = req.headers; //authorization is the token
+    return Session.findOne({ token: authorization }, (err, reply) => {
+        if (err || !reply) {
+            console.log(err);
+            return res.status(400).json("Authorization denied trying to add word");
+        }
+        user = await User.findById(reply.userId);
+        
+        if (!user) {
+            return res.status(400).json("unable to find user in addWord route");
+        }
+        const word = req.body.word;
+        lcWord = word.toLowerCase();
+        const wordObj = await Wordef.findOne({ word : lcWord });
+        if (!wordObj) {
+            return resp.status(400).send("can't find word in db");
+        }
+        console.log("word from mongo in addword route ", wordObj);
+        user.addToCart(wordObj._id);
+        return res.json(wordObj);
+        }).catch(err => console.log("error finding session, ", err));      
+})
 
 
 
@@ -180,42 +207,7 @@ app.get('/', async (req, res) => {
         return res.send('<h3>Enter a word</h3>')
     }
     //console.log(API_URL+word);
-    try {
-        //wordObj contains all the needed word info
-        const wordObj = await axios.get(API_URL + word, { 
-            headers: {
-                app_id : process.env.APP_ID,
-                app_key : process.env.API_KEY
-            }
-        });
-        
-
-        const wordObjInfo = wordObj.data.results[0].lexicalEntries[0];
-
-        //the first object in the senses array has all the good stuff
-        const definitions = []; //for storing 1+ definitions of a word
-
-
-        //for each loops through senses array
-        wordObjInfo.entries[0].senses.filter(data => 'examples' in data)
-            .forEach(def => {
-                    //console.log('def is ', def);
-                    definitions.push({  definition: def.definitions[0], 
-                                        examples: def.examples.map(eg => {
-                                            return { text: eg.text }
-                                        }) 
-                                    }) 
-            });
-
-        const type = wordObjInfo.lexicalCategory.text;
-        
-            // --- id for zestful word object
-        // console.log('finding zestful word object');
-        // const wobj = await Wordef.findOne({ word: 'zestful' });
-        // const wid = wobj._id;
-        // console.log(wid);
-            // -----------------------
-
+    
 
         // ---------- creating new word ------------
         // const wordDef = new Wordef({
@@ -229,11 +221,6 @@ app.get('/', async (req, res) => {
         // wordDef.save().then(result => { //save() will save to DB
         //     console.log(result)
             // -------------------------------
-
-    } catch(error) {
-        console.error(error);
-        res.send(400);
-    }
     
 });
 
@@ -282,6 +269,26 @@ app.get("/emptyCart", async (req, res) => {
   }
 });
 
+app.get('/test', async (req, res) => {
+    const word = req.query.word;
+    try {
+      const wordObject = await axios.get(API_URL + word, {
+        headers: {
+          app_id: process.env.APP_ID,
+          app_key: process.env.API_KEY
+        }
+      });
+      if ("error" in wordObject) {
+        console.log(wordObject.error);
+        return null;
+      }
+      return res.send(wordObject);
+    } catch (error) {
+      console.error(error);
+      res.status(400).send();
+    }
+  
+})
 
 mongoose
     .connect(MONGO_URI,

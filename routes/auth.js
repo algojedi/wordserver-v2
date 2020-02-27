@@ -18,10 +18,10 @@ const getTokenId = ((req, res) => {
                 console.log(err)
                 return res.status(400).json("Authorization denied")
             } 
-            console.log('reply return from DB sesh: ', reply)
+            console.log('reply returned from DB sesh: ', reply)
             return res.json({
               success: true,
-              userId: reply.id,
+              userId: reply.userId,
               token: reply.token
             });
         })
@@ -35,10 +35,11 @@ const signToken = email => {
 }
 
 //This function saves the session to the database
-const setToken = (token, id) => {
+//const setToken = (token, id) => {
+const setToken = (token, userId) => {
     const session = new Session({
         token,
-        id
+        userId
     });
     //calling function expecting a Promise, hence...
     return Promise.resolve(session.save())
@@ -65,8 +66,10 @@ router.post('/login', (req, res, next) => {
     const { authorization } = req.headers;
 
     return authorization ? getTokenId(req, res) : //extract and send id from DB
+        //if getTokenId does not return, then create new session
         handleSignIn(req, res) //handleSignIn validates login info
-            .then(data => {
+            //if the login info is correct, create session
+            .then(data => { //data is the user
                 return data._id && data.email ? createSessions(data) : Promise.reject(data)
             })
             .then(session => res.json(session))
@@ -148,8 +151,8 @@ const handleSignIn = (req, res) => {
 router.get('/profile/:id', (req, res) => {
     const userId = req.params.id;
     console.log('trying to lookup ', userId);
-    //User.find
-    //Product.findById(prodId)
+    
+    console.log('user id received in profile req: ', userId);
     return User.findOne({ _id: userId }) //mongo id in User stored as _id
 
     .populate("cart") //TODO: cart not populating wordId
@@ -161,18 +164,7 @@ router.get('/profile/:id', (req, res) => {
             return res.json({ email, cart, name });
         });
 })
-        //   .exec(function(err, user) { 
-        //     if (!user) {
-        //       return res.status(400).json("incorrect user id");
-        //     }
-        //     const { email, cart, name } = user;
-        //     return res.json({ email, cart, name });
-        //   });
-
-
-
-
-
+        
 
 
 router.post('/logout', (req, res, next) => {
