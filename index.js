@@ -6,6 +6,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 //const session = require("express-session");
+const Session = require("./models/session");
 
 require('dotenv').config();
 
@@ -140,31 +141,59 @@ const addWordToDB = ({ word, part, definitions }) => {
       }
 }
 
-
 app.post("/addWordToCart", async (req, res) => {
-  
     const { authorization } = req.headers; //authorization is the token
-    return Session.findOne({ token: authorization }, (err, reply) => {
-        if (err || !reply) {
-            console.log(err);
-            return res.status(400).json("Authorization denied trying to add word");
-        }
-        user = await User.findById(reply.userId);
-        
-        if (!user) {
-            return res.status(400).json("unable to find user in addWord route");
-        }
-        const word = req.body.word;
-        lcWord = word.toLowerCase();
-        const wordObj = await Wordef.findOne({ word : lcWord });
-        if (!wordObj) {
-            return resp.status(400).send("can't find word in db");
-        }
-        console.log("word from mongo in addword route ", wordObj);
-        user.addToCart(wordObj._id);
-        return res.json(wordObj);
-        }).catch(err => console.log("error finding session, ", err));      
+    let word = req.body.word;
+    console.log('the req body object is in data? ', req.body);
+    // console.log('in addwordtocart route, finding : ', word);
+    word = word.toLowerCase();
+    try {
+      const sesh = await Session.findOne({ token: authorization }).exec();
+      if (!sesh) {
+        console.log('invalid token addwordtocart ', err);
+        return res.status(400).json("Authorization denied trying to add word");
+      }
+      const user = await User.findOne({_id : sesh.userId }).exec();
+      if (!user) {
+          return res.status(400).json("unable to find user in addWord route");
+      }
+      //find mongoose word object
+      const wordObj = await Wordef.findOne({ word : word });
+      if (!wordObj) {
+          return resp.status(400).send("can't find word in db");
+      }
+      console.log("word from mongo in addword route ", wordObj);
+      user.addToCart(wordObj._id);
+      return res.json(wordObj);
+    }
+    catch(err) {
+      console.log(err);      
+    } 
 })
+// app.post("/addWordToCart", async (req, res) => {
+//     const { authorization } = req.headers; //authorization is the token
+//     Session.findOne({ token: authorization }, (err, reply) => {
+//         if (err || !reply) {
+//             console.log('invalid token addwordtocart ', err);
+//             return res.status(400).json("Authorization denied trying to add word");
+//         }
+//         //const user = await User.findById(reply.userId);
+//         const user = await User.findOne({_id : reply.userId }).exec();
+        
+//         if (!user) {
+//             return res.status(400).json("unable to find user in addWord route");
+//         }
+//         const word = req.body.word;
+//         lcWord = word.toLowerCase();
+//         const wordObj = await Wordef.findOne({ word : lcWord });
+//         if (!wordObj) {
+//             return resp.status(400).send("can't find word in db");
+//         }
+//         console.log("word from mongo in addword route ", wordObj);
+//         user.addToCart(wordObj._id);
+//         return res.json(wordObj);
+//         }).catch(err => console.log("error finding session, ", err));      
+// })
 
 
 
@@ -225,7 +254,8 @@ app.get('/', async (req, res) => {
 });
 
 app.post('/removeWord', async (req, res) => {
-  const userId = "5e1cbaed7f37fe29f8f2aaf8";    //user Jake in db
+  //user Id????
+
   user = await User.findById(userId);
   if (!user) {
       return res.status(400).json('unable to find user in addWord route')

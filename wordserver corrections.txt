@@ -19,6 +19,10 @@ feb 26 - /register route seems to be working but needs tokenization
 
 feb 27 - app.post("/addWordToCart", async (req, res) => 
 		- This route needs to be tested!! Be sure to include word in req body 
+ feb 28 
+	- need to fix client side
+		...const handleAddToCart = async () => {
+
 
 
 when returning user, also populate definitions array to return word definitions.
