@@ -25,17 +25,23 @@ const userSchema = new Schema({
 });
 
 
-//wordId to be of type ObjectId 
+//wordId must be of type ObjectId 
 userSchema.methods.addToCart = function(wordId) { 
   
-  const cartWordIndex = this.cart.findIndex(cw => {  //check to see if word is already in cart
-    return cw.wordId.toString() === wordId.toString();
-  });
-  //return early if word already exists in cart
-  if (cartWordIndex >= 0) {
-    console.log('word already exists in cart');
-    return;
+  // const cartWordIndex = this.cart.findIndex(cw => {  //check to see if word is already in cart
+  //   return cw.wordId.toString() === wordId.toString();
+  // });
+  for (var w of this.cart) {
+    if (w.equals(wordId)) {
+      console.log('word already exists in cart - user model schema')
+      return; //word already exists in cart, hence do nothing
+    }
   }
+  //return early if word already exists in cart
+  // if (cartWordIndex >= 0) {
+  //   console.log('word already exists in cart');
+  //   return;
+  // }
   const updatedCart = [...this.cart];
   updatedCart.push(wordId);
   console.log('updated cart: ', updatedCart);
@@ -46,8 +52,11 @@ userSchema.methods.addToCart = function(wordId) {
 //wordId to be of type ObjectId
 userSchema.methods.removeFromCart = function(wordId) {
   const updatedCartItems = this.cart.filter(wordRef => {
-    return wordRef.toString() !== wordId.toString();
+    return !wordRef.equals(wordId)
   });
+  if (this.cart.length == updatedCartItems.length) {
+    console.log('no word removed from cart upon attempt... user model mongoose')
+  }
   this.cart = updatedCartItems;
   return this.save();
 };

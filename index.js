@@ -48,13 +48,18 @@ const User = require('./models/user');
 //this method only runs if the word is NOT in the database
 //function returns object containing all relevant word info in WordDef schema layout, or null if no match found
 const fetchWordData = async word => {
+  let wordObject = {};
+  
   try {
-    const wordObject = await axios.get(API_URL + word, {
+      wordObject = await axios.get(API_URL + word, {
       headers: {
         app_id: process.env.APP_ID,
         app_key: process.env.API_KEY
       }
-    });
+    })
+  } catch (err) {
+    console.log("error when fetching for api", err);
+  }
     if ("error" in wordObject) {
       console.log(wordObject.error);
       return null;
@@ -82,10 +87,8 @@ const fetchWordData = async word => {
     const part = wordInfo.lexicalCategory.text;
     console.log("successful word retrieval: ", definitions);
     return { word, part, definitions };
-  } catch (err) {
-    console.log("error when fetching for api", err);
-  }
-};
+  
+}
 
 
 app.get('/define', async (req, res) => {
@@ -170,30 +173,7 @@ app.post("/addWordToCart", async (req, res) => {
       console.log(err);      
     } 
 })
-// app.post("/addWordToCart", async (req, res) => {
-//     const { authorization } = req.headers; //authorization is the token
-//     Session.findOne({ token: authorization }, (err, reply) => {
-//         if (err || !reply) {
-//             console.log('invalid token addwordtocart ', err);
-//             return res.status(400).json("Authorization denied trying to add word");
-//         }
-//         //const user = await User.findById(reply.userId);
-//         const user = await User.findOne({_id : reply.userId }).exec();
-        
-//         if (!user) {
-//             return res.status(400).json("unable to find user in addWord route");
-//         }
-//         const word = req.body.word;
-//         lcWord = word.toLowerCase();
-//         const wordObj = await Wordef.findOne({ word : lcWord });
-//         if (!wordObj) {
-//             return resp.status(400).send("can't find word in db");
-//         }
-//         console.log("word from mongo in addword route ", wordObj);
-//         user.addToCart(wordObj._id);
-//         return res.json(wordObj);
-//         }).catch(err => console.log("error finding session, ", err));      
-// })
+
 
 
 
@@ -254,22 +234,22 @@ app.get('/', async (req, res) => {
 });
 
 app.post('/removeWord', async (req, res) => {
-  //user Id????
-
-  user = await User.findById(userId);
-  if (!user) {
-      return res.status(400).json('unable to find user in addWord route')
-  } 
-
-  const wordId = req.body.wordId;
+  
+const { authorization } = req.headers; //authorization is the token
+let wordId = req.body.wordId;
   try {
-      const word = await Wordef.findById(wordId);
-      if (word) {
-          user.removeFromCart(word._id); //argument must be of type ObjectID
-          res.json('removed from cart');   
-      } else {
-          res.json("word not found in cart");   
+      const sesh = await Session.findOne({ token: authorization }).exec();
+      if (!sesh) {
+        console.log('invalid token removeword route ', err);
+        return res.status(400).json("Authorization denied trying to remove word");
       }
+      const user = await User.findOne({_id : sesh.userId }).exec();
+      if (!user) {
+          return res.status(400).json("unable to find user in addWord route");
+      }
+      user.removeFromCart(wordId)
+      res.status(200).send();
+
   }
   catch(e) {
       console.log('error in route remove word', e);
@@ -278,7 +258,7 @@ app.post('/removeWord', async (req, res) => {
 })
 
 
-// 
+
 
 
 //TODO: cart does not empty in db
@@ -326,7 +306,7 @@ mongoose
     .then(result => {
         
         
-        const PORT = process.env.PORT || 3001;
+        const PORT = process.env.PORT || 5000;
         app.listen(PORT, () => {
             console.log(`Mixing it up on port ${PORT}`)
         })

@@ -1,5 +1,9 @@
 TODO:
 
+****** pgm crashes when trying to get a nonsensical word??? *****
+
+
+
 The Wordef model needs to be changed to remove part from definitions and into main shit
 ** Test /define route!!!
 
