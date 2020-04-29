@@ -306,7 +306,7 @@ mongoose
     .then(result => {
         
         
-        const PORT = process.env.PORT || 5000;
+        const PORT = process.env.PORT || 3001;
         app.listen(PORT, () => {
             console.log(`Mixing it up on port ${PORT}`)
         })
@@ -318,28 +318,3 @@ mongoose
 
 
 
-
-
-
-//  app.post('/addWord', async (req, res) => {
-//   const userId = "5e38399819864a04d8c90b44";    //user Joh lennon in db
-//   user = await User.findById(userId);
-//   if (!user) {
-//       return res.status(400).json('unable to find user in addWord route')
-//   }
-  
-//   const wordId = req.body.wordId;
-//   try {
-//       const word = await Wordef.findById(wordId);
-//       if (word) {
-//           user.addToCart(word._id); //should be of type ObjectID....
-//           res.json('added word to cart');   
-//       } else {
-//           res.json("word already in cart");   
-//       }
-//   }
-//   catch(e) {
-//       console.log('error in route adding word', e);
-//       res.send(400);
-//   }
-// });

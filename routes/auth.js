@@ -91,9 +91,8 @@ const handleSignIn = (req, res) => {
                 .compare(password, user.password)
                 .then(doMatch => {
                     console.log('brcypt match? ', doMatch);
-                    return doMatch ? user : 
+                    return doMatch ? user : //TODO: Need to filter this to not return hashed pw inside user obj
                         Promise.reject('incorrect email or password');
-                    
                 })
                 .catch(err => {
                     Promise.reject(err);

@@ -27,6 +27,9 @@ feb 27 - app.post("/addWordToCart", async (req, res) =>
 	- need to fix client side
 		...const handleAddToCart = async () => {
 
+mar 6 - removing word from cart in reducer gives error
+   
+mar 7 - //TODO: label for material ui input error label -- main js
 
 
 when returning user, also populate definitions array to return word definitions.
@@ -54,3 +57,12 @@ const token = window.sessionStorage.getItem("token");
           "Authorization": token
         }
       })
+
+
+mar 17 - fixed delete btn
+	- TODO: fixed nav bar and general header area
+
+mar 26 - changed renewCart function to hopefully fix initial login issue where cart was not updating
+	- kinda fixed main search bar
+
+need to add error messages!
