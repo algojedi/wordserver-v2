@@ -61,9 +61,9 @@ userSchema.methods.removeFromCart = function(wordId) {
   return this.save();
 };
 
-userSchema.methods.clearCart = function() {
+userSchema.methods.emptyCart = function() {
   this.cart = [];
-  console.log('in clear cart method')
+  console.log('mongoose model emptying cart method')
   return this.save();
 };
 

@@ -194,7 +194,7 @@ if (!req.userId) { // this case only here as precaution
       return res.status(400).json("unable to find user profile on delete");
     }
     user.removeFromCart(wordId);
-    res.status(200).send();
+    res.status(200).json("success");
   } catch (e) {
     //console.log("error in route remove word", e);
     res.status(500).json('oops... something went wrong')
@@ -202,6 +202,32 @@ if (!req.userId) { // this case only here as precaution
   }
 });
 
+
+  //TODO: cart does not empty in db
+ app.post("/emptyCart", async (req, res) => {
+
+
+if (!req.userId) { // this case only here as precaution
+    //this route is only for logged in users
+      return res.status(400).json("Authorization denied trying to add word");
+  }
+
+  try {
+    const user = await User.findOne({ _id: req.userId }).exec();
+    if (!user) {
+      return res.status(400).json("unable to find user profile on delete all words");
+    }
+    user.emptyCart();
+    return res.status(200).json("success");
+  } catch (e) {
+    //console.log("error in route remove word", e);
+    res.status(500).json('oops... something went wrong')
+
+  }
+
+
+
+ });
 
 
 mongoose
@@ -216,24 +242,6 @@ mongoose
     console.log(err);
   });
 
-
-  //TODO: cart does not empty in db
-// app.get("/emptyCart", async (req, res) => {
-//   const userId = "5e1cbaed7f37fe29f8f2aaf8"; //user Jake in db
-//   user = await User.findById(userId);
-//   if (!user) {
-//     return res.status(400).json("unable to find user in addWord route");
-//   }
-//   try {
-
-//       user.clearCart();
-//       return res.json("emptied cart");
-
-//   } catch (e) {
-//     console.log("error in route empty cart", e);
-//     res.send(400);
-//   }
-// });
 
 // app.get("/test", async (req, res) => {
 //   const word = req.query.word;
