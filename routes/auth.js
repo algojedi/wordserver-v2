@@ -2,10 +2,8 @@ const express = require("express");
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-//const Session = require('../models/session');
 const redisClient = require("../redis");
 
-//const authController = require('../controllers/auth');
 
 const router = express.Router();
 
@@ -22,7 +20,7 @@ const createSessions = (user) => {
   const token = signToken(email);
 
   return new Promise((resolve, reject) => {
-    //save token in redis - note: _id is an object, hence stringify needed
+    //save token in redis - note: _id is an object, so stringify needed
     redisClient.set(token, JSON.stringify(_id), (err, result) => {
       if (err) {
         reject("error in saving token to redis");
@@ -34,7 +32,7 @@ const createSessions = (user) => {
 };
 
 router.post("/login", async (req, res, next) => {
-  console.log("attempting login");
+//  console.log("attempting login");
   const { authorization } = req.headers;
 
   if (authorization) {
@@ -89,7 +87,6 @@ const handleSignIn = (req, res) => {
         })
         .catch((err) => {
           Promise.reject(err);
-          //res.redirect('/home'); //error with bcrypt process
         });
     })
     .catch((err) => Promise.reject(err));
@@ -100,7 +97,7 @@ router.get("/profile/:id", (req, res) => {
   console.log("user id received in profile req: ", userId);
   return User.findOne({ _id: userId }) //mongo id in User stored as _id
 
-    .populate("cart") //TODO: cart not populating wordId
+    .populate("cart") 
     .then((user) => {
       if (!user) {
         return res.status(400).json("incorrect user id");
@@ -126,16 +123,6 @@ router.post("/logout", (req, res, next) => {
   });
 });
 
-// router.get("/checkauth", (req, res, next) => {
-//   console.log("req user? ", "user" in req);
-//   console.log("req.seshion in checkauth: ", req.session);
-//   //console.log('in checkauth route')
-//   if (!"session" in req) {
-//     res.end();
-//   }
-//   console.log("req session user exists? ", "user" in req.session);
-//   return "user" in req.session ? res.send(user) : res.send("no user found");
-// });
 
 router.post("/register", async (req, res, next) => {
   const { name, email, password } = req.body;
