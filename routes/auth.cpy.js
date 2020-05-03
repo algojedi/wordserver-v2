@@ -143,23 +143,23 @@ router.post("/register", async (req, res, next) => {
     email,
     cart: [],
   });
-  user.save( async (err, user) => {
-    if (err) { 
-      return res.status(500).send("Could not create user");
-    }
+  //console.log("user object created but not saved");
+  user.save((err, user) => {
+    if (err) res.status(500).send("Could not create user");
+
+//      : res.status(200).send("successfully created new user");
 	else {  
-      sessionInfo = await createSessions(user); //createSessions returns a promise
-      if (sessionInfo.token) { //token created
-        console.log('session token created and sent in register route')
-        return res.status(200).json({
-          id : user._id,
+
+      const sessionInfo = await createSessions(user); //createSessions returns a promise
+      if (sessionInfo.token)
+        return res.json({
+          success: true,
+          userId: user._id,
           token: sessionInfo.token,
-        })
-      }  
-      return res.status(500).send("Could not create user");
-  };
-  // console.log("user object saved");
+        });
+		res.status(200).json({ id: user._id }); }
+  });
+  console.log("user object saved");
 });
-})
 
 module.exports = router;
