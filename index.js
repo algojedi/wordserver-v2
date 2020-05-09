@@ -2,12 +2,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
 const cors = require("cors");
-const axios = require("axios");
 const mongoose = require("mongoose");
 const authRoutes = require("./routes/auth");
 const wordRoutes = require("./routes/words");
-const Wordef = require("./models/wordef");
-const User = require("./models/user");
 const redisClient = require("./redis");
 
 require("dotenv").config();
