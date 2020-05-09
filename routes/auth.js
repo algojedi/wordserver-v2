@@ -21,7 +21,6 @@ const createSessions = (user) => {
 
   return new Promise((resolve, reject) => {
     //save token in redis - note: _id is an object, so stringify needed
-    //redisClient.set(token, JSON.stringify(_id), (err, result) => {
 //set session to expire in 10 days
     redisClient.setex(token, 86400, JSON.stringify(_id), (err, result) => {
       if (err) {
@@ -160,7 +159,6 @@ router.post("/register", async (req, res, next) => {
       }  
       return res.status(500).send("Could not create user");
   };
-  // console.log("user object saved");
 });
 })
 
