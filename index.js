@@ -19,7 +19,7 @@ const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "wordsapp", "build")));
+app.use(express.static(path.join(__dirname, "wordsie", "build")));
 
 -app.get("/", function (req, res) {
   +app.get("/*", function (req, res) {
