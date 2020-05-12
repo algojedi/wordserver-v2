@@ -24,6 +24,15 @@ app.use(express.static(path.join(__dirname, "wordsie", "build")));
   });
 });
 
+//enable service worker 
+app.get('/servicer-worker.js', (req, res) => {
+
+	res.sendFile(path.resolve(__dirname, 'wordsie', 'build', 'service-worker.js'));
+	//res.sendFile(path.resolve(__dirname, '..', 'wordsie', 'build', 'service-worker.js'));
+
+
+});
+
 //save userid on req object if there's a token
 app.use(function(req, res, next) {
 	const { authorization } = req.headers; //authorization is the token
