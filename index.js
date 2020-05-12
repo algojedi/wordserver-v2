@@ -52,7 +52,7 @@ app.use(wordRoutes);
 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
 	.then(result => {
-		const PORT = process.env.PORT || 3001;
+		const PORT = process.env.PORT || 3000;
 		app.listen(PORT, () => {
 			console.log(`Mixing it up on port ${PORT}`);
 		});
