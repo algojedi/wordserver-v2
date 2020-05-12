@@ -23,7 +23,7 @@ const createSessions = user => {
 		//set session to expire in 10 days
 		redisClient.setex(
 			token,
-			86400,
+			172800, // works out to 20 days ... ten: 86400,
 			JSON.stringify(_id),
 			(err, result) => {
 				if (err) {
