@@ -14,51 +14,56 @@ const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@clust
 
 const app = express();
 
-app.use(cors());
-app.use(bodyParser.json());
-//app.use(express.static(path.join(__dirname, "wordsie", "build")));
-
-//-app.get("/", function (req, res) {
- // +app.get("/*", function (req, res) {
-  //  res.sendFile(path.join(__dirname, "wordsie", "build", "index.html"));
-//  });
-//});
-
-//enable service worker 
-//app.get('/servicer-worker.js', (req, res) => {
-
-//	res.sendFile(path.resolve(__dirname, 'wordsie', 'build', 'service-worker.js'));
-	//res.sendFile(path.resolve(__dirname, '..', 'wordsie', 'build', 'service-worker.js'));
-
-
-//});
 if (process.env.NODE_ENV === "production") {
   console.log("Running in production");
 } else {
   console.log(process.env.NODE_ENV);
 }
 
+app.use(cors());
+app.use(bodyParser.json());
+
+app.use(express.static(path.join(__dirname, "wordsie", "build")));
+
+-app.get("/", function (req, res) {
+  +app.get("/*", function (req, res) {
+    res.sendFile(path.join(__dirname, "wordsie", "build", "index.html"));
+  });
+ });
+
+//enable service worker
+app.get('/servicer-worker.js', (req, res) => {
+
+	res.sendFile(path.resolve(__dirname, 'wordsie', 'build', 'service-worker.js'));
+//res.sendFile(path.resolve(__dirname, '..', 'wordsie', 'build', 'service-worker.js'));
+
+});
+
+if (process.env.NODE_ENV === "production") {
+  console.log("Running in production");
+} else {
+  console.log(process.env.NODE_ENV);
+}
+
+
 //save userid on req object if there's a token
-app.use(function(req, res, next) {
-	return res.json('just checking');
-	const { authorization } = req.headers; //authorization is the token
-	if (!authorization) {
-		console.log("no auth token");
-		return next(); // user will not be able to access all routes
-	} else {
-		//    console.log(authorization)
-		redisClient.get(authorization, (err, reply) => {
-			if (err || !reply) {
-				console.log("issue with token", err);
-				return res
-					.status(400)
-					.json("Authorization denied");
-			}
-			//     console.log('reply from redis in middleware', reply)
-			req.userId = JSON.parse(reply);
-			next();
-		});
-	}
+app.use(function (req, res, next) {
+  const { authorization } = req.headers; //authorization is the token
+  if (!authorization) {
+    console.log("no auth token");
+    return next(); // user will not be able to access all routes
+  } else {
+    //    console.log(authorization)
+    redisClient.get(authorization, (err, reply) => {
+      if (err || !reply) {
+        console.log("issue with token", err);
+        return res.status(400).json("Authorization denied");
+      }
+      //     console.log('reply from redis in middleware', reply)
+      req.userId = JSON.parse(reply);
+      next();
+    });
+  }
 });
 app.use(authRoutes);
 app.use(wordRoutes);
