@@ -19,8 +19,8 @@ app.use(bodyParser.json());
 //app.use(express.static(path.join(__dirname, "wordsie", "build")));
 
 //-app.get("/", function (req, res) {
-//  +app.get("/*", function (req, res) {
-//    res.sendFile(path.join(__dirname, "wordsie", "build", "index.html"));
+ // +app.get("/*", function (req, res) {
+  //  res.sendFile(path.join(__dirname, "wordsie", "build", "index.html"));
 //  });
 //});
 
@@ -32,9 +32,15 @@ app.use(bodyParser.json());
 
 
 //});
+if (process.env.NODE_ENV === "production") {
+  console.log("Running in production");
+} else {
+  console.log(process.env.NODE_ENV);
+}
 
 //save userid on req object if there's a token
 app.use(function(req, res, next) {
+	return res.json('just checking');
 	const { authorization } = req.headers; //authorization is the token
 	if (!authorization) {
 		console.log("no auth token");
@@ -61,7 +67,7 @@ app.use(wordRoutes);
 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
 	.then(result => {
-		const PORT = process.env.PORT || 3001;
+		const PORT = process.env.PORT || 3000;
 		app.listen(PORT, () => {
 			console.log(`Mixing it up on port ${PORT}`);
 		});
