@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const Wordef = require("../models/wordef")
+const Wordef = require("../models/wordef");
 const User = require("../models/user");
 
 const API_URL = "https://od-api.oxforddictionaries.com/api/v2/entries/en-gb/";
@@ -19,10 +19,12 @@ const fetchWordData = async (word) => {
       },
     });
   } catch (err) {
-    console.log("error when fetching for api", err);
+    console.log("error when fetching word from api");
+    return null;
   }
   if ("error" in wordObject) {
-    console.log(wordObject.error);
+    console.log("error when fetching word from api");
+    //console.log(wordObject.error);
     return null;
   }
 
@@ -73,6 +75,9 @@ router.get("/define", async (req, res) => {
     //store reference in DB
     if (wordInfo) {
       await addWordToDB(wordInfo);
+    } else {
+      console.log("error in api lookup: likely caused by non-word input");
+      res.status(400).send();
     }
     return res.json(wordInfo);
   } catch (error) {
@@ -166,6 +171,5 @@ router.post("/emptyCart", async (req, res) => {
     res.status(500).json("oops... something went wrong");
   }
 });
-
 
 module.exports = router;

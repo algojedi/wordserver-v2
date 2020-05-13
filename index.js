@@ -16,22 +16,22 @@ const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "wordsie", "build")));
+//app.use(express.static(path.join(__dirname, "wordsie", "build")));
 
--app.get("/", function (req, res) {
-  +app.get("/*", function (req, res) {
-    res.sendFile(path.join(__dirname, "wordsie", "build", "index.html"));
-  });
-});
+//-app.get("/", function (req, res) {
+//  +app.get("/*", function (req, res) {
+//    res.sendFile(path.join(__dirname, "wordsie", "build", "index.html"));
+//  });
+//});
 
 //enable service worker 
-app.get('/servicer-worker.js', (req, res) => {
+//app.get('/servicer-worker.js', (req, res) => {
 
-	res.sendFile(path.resolve(__dirname, 'wordsie', 'build', 'service-worker.js'));
+//	res.sendFile(path.resolve(__dirname, 'wordsie', 'build', 'service-worker.js'));
 	//res.sendFile(path.resolve(__dirname, '..', 'wordsie', 'build', 'service-worker.js'));
 
 
-});
+//});
 
 //save userid on req object if there's a token
 app.use(function(req, res, next) {
@@ -61,7 +61,7 @@ app.use(wordRoutes);
 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
 	.then(result => {
-		const PORT = process.env.PORT || 3000;
+		const PORT = process.env.PORT || 3001;
 		app.listen(PORT, () => {
 			console.log(`Mixing it up on port ${PORT}`);
 		});
