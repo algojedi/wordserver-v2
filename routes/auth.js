@@ -1,145 +1,212 @@
-const express = require("express");
-const User = require("../models/user");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const redisClient = require("../redis");
+const express = require('express');
+const User = require('../models/user');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const redisClient = require('../redis');
+const { isValid, isValidRegistration } = require('../utils/validator');
+
+// const { isValid, isValidRegistration } = validator
 
 const router = express.Router();
 
-const signToken = (email) => {
-  const jwtPayload = { email };
-  return jwt.sign(jwtPayload, process.env.JWTSECRET, {
-    expiresIn: "2 days",
-  });
-};
+// timeout in seconds
+const jwt_access_expiration = '5d';
+const jwt_refresh_expiration = '120d';
 
-const createSessions = (user) => {
+
+router.post('/token', (req, res) => {
+  const { refreshToken } = req.body
+  if (!refreshToken) return res.status(401).json({ message: 'Missing token' })
+  // TODO: check if refresh token is in redis 
+  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
+
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    const accessToken = generateAccessToken({ name: user.name });
+    res.json({ accessToken: accessToken });
+  });
+});
+
+
+// TODO: these functions should have a secret that changes every day
+function generateAccessToken(id, email) {
+  return jwt.sign({ id, email }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: jwt_access_expiration,
+  });
+}
+
+function generateRefreshToken(id, email) {
+  return jwt.sign({ id, email }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: jwt_refresh_expiration,
+  });
+}
+
+/* user must be defined 
+   returns refresh token and access token on success and null on failure
+*/
+const createSessions = async (user) => {
   //create jwt and user data
   const { _id, email } = user;
-  const token = signToken(email);
+  // generate refresh token
+  // const token = signToken(email);
 
-  return new Promise((resolve, reject) => {
+  try {
+    const accessToken = generateAccessToken(_id, email);
+    const refreshToken = generateRefreshToken(_id, email);
+
+    // return new Promise((resolve, reject) => {
     //save token in redis - note: _id is an object, so stringify needed
     //set session to expire in 10 days
-    redisClient.setex(
-      token,
-      172800, // works out to 20 days ... ten: 86400,
-      JSON.stringify(_id),
-      (err, result) => {
-        if (err) {
-          reject("error in saving token to redis");
-        } else {
-          resolve({ token });
-        }
-      }
+
+    const reply = await redisClient.set(
+      _id,
+      JSON.stringify({ refreshToken, accessToken }),
     );
-  });
+    console.log('reply from redis in createSessions: ', reply);
+    return { accessToken, refreshToken };
+  } catch (error) {
+    console.log('error creating sessions', error);
+    return null;
+  }
 };
 
-router.post("/login", async (req, res, next) => {
-  //  console.log("attempting login");
+router.post('/login', async (req, res, next) => {
   const { authorization } = req.headers;
 
   if (authorization) {
+    // would have been set in middleware
+    console.log('authorization header found : ', authorization);
     return res.json({
+      // default status code is 200
       success: true,
-      userId: req.userId, // set in middleware
+      userId: req.userId,
       token: authorization,
     });
   }
-  //no auth token
-  try {
-    const user = await handleSignIn(req, res); //handleSignIn validates login info
 
-    //if the login info is correct, create session
-    if (user && user._id && user.email) {
-      sessionInfo = await createSessions(user); //createSessions returns a promise
-      if (sessionInfo.token)
-        return res.json({
-          success: true,
-          userId: user._id,
-          token: sessionInfo.token,
-        });
+  const { email, password } = req.body;
+
+  if (!isValid(email, password)) {
+    console.log('invalid username/password');
+    return res.status(400).json({ message: 'invalid username or password' });
+  }
+
+  console.log('about to authenticate creds for sign in');
+  // no auth token
+  try {
+    // handleSignIn checks for user in db
+    const user = await handleSignIn(email, password);
+    console.log('user found ? : ', user);
+    if (!user) {
+      return res.status(400).json({ message: 'no such user' });
+    }
+    // if the login info is correct, create session
+    const sessionInfo = await createSessions(user);
+    console.log('session info received in login : ', sessionInfo);
+    if (sessionInfo) {
+      return res.json({
+        success: true,
+        userId: user._id,
+        accessToken: sessionInfo.accessToken,
+        refreshToken: sessionInfo.refreshToken,
+      });
     } else {
-      return res.status(400).json("no such user");
+      return res.status(400).json({ message: 'error in creating session' });
     }
   } catch (err) {
-    console.log(err);
-
-    return res.status(400).json("oops.. something went wrong");
+    console.log('unexpected error: ', err);
+    return res.status(400).json({ message: 'oops.. something went wrong' });
   }
 });
 
-//a function that validates username/password and returns a promise
-//on success, should return the user
-const handleSignIn = (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
+// a function that validates username/password and returns a promise
+// on resolve, should return the user
+const handleSignIn = async (email, password) => {
+  try {
+    let user = await User.findOne({ email });
+    if (!user) {
+      console.log('no user found by db');
+      return null;
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    // TODO: Need to filter this to not return hashed pw inside user obj
+    return isMatch ? user : null;
+  } catch (err) {
+    console.log('db error?', err);
     return null;
   }
-  return User.findOne({ email: email })
-    .then((user) => {
-      if (!user) {
-        return null;
-      }
-      return bcrypt
-        .compare(password, user.password)
-        .then((doMatch) => {
-          return doMatch
-            ? user //TODO: Need to filter this to not return hashed pw inside user obj
-            : null;
-        })
-        .catch((err) => {
-          return null;
-        });
-    })
-    .catch((err) => {
-      console.log(err);
-      return null;
-    });
 };
 
-router.get("/profile/:id", (req, res) => {
+router.get('/getTokenInfo', async (req, res, next) => {
+  const someId = '6275c73824e2991946c58d06';
+
+  try {
+    let reply = await redisClient.get(someId);
+    const tokens = JSON.parse(reply);
+    const message = reply ? 'good stuff' : 'no token found';
+    // verify call can also be done synchronously with try catch
+    console.log({ tkn: tokens.accessToken });
+    const decoded = jwt.verify(
+      tokens.accessToken,
+      process.env.ACCESS_TOKEN_SECRET,
+    );
+    console.log('decoded: ', decoded);
+    // decoded:  { email: 'Jelvis@jelvis.com', iat: 1652018132, exp: 1652450132 }
+    return res.json({ message });
+  } catch (err) {
+    console.log('error in getTokenInfo: ', err);
+    if (err.name === "TokenExpiredError") console.log('gotcha!')
+    return res.status(400).json({ message: 'error in getTokenInfo' });
+  }
+});
+
+router.get('/profile/:id', (req, res) => {
   const userId = req.params.id;
-  console.log("user id received in profile req: ", userId);
+  console.log('user id received in profile req: ', userId);
   return User.findOne({ _id: userId }) //mongo id in User stored as _id
 
-    .populate("cart")
+    .populate('cart')
     .then((user) => {
       if (!user) {
-        return res.status(400).json("incorrect user id");
+        return res.status(400).json({ message: 'incorrect user id' });
       }
       const { email, cart, name } = user;
       return res.json({ email, cart, name });
     });
 });
 
-router.post("/logout", (req, res, next) => {
+router.post('/logout', (req, res, next) => {
   const { authorization } = req.headers;
   if (!authorization) {
-    return res.status(400).send("no token found");
+    return res.status(400).json({ message: 'no token found' });
   }
   redisClient.del(authorization, function (err, response) {
     if (response == 1) {
-      console.log("logged out");
-      return res.status(200).send("successfully signed out");
+      console.log('logged out');
+      return res.status(200).json({ message: 'successfully signed out' });
     } else {
-      console.log("error logging out");
-      return res.status(500).send("error signing out");
+      console.log('error logging out');
+      return res.status(500).json({ message: 'error signing out' });
     }
   });
 });
 
-router.post("/register", async (req, res, next) => {
+router.post('/register', async (req, res, next) => {
   const { name, email, password } = req.body;
-  //first check if user already exists
+
+  if (!isValidRegistration(name, email, password)) {
+    console.log('invalid username/password');
+    return res.status(400).json({ message: 'invalid username or password' });
+  }
+  // first check if user already exists
   try {
     const userDoc = await User.findOne({ email });
     if (userDoc) {
-      return res.status(400).send({ message: "user already exists" });
+      return res.status(400).json({ message: 'user already exists' });
     }
   } catch (err) {
-    console.log(err);
+    console.log('error checking db: ', err);
+    return res.status(500).json({ message: 'database error' });
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -151,19 +218,24 @@ router.post("/register", async (req, res, next) => {
   });
   user.save(async (err, user) => {
     if (err) {
-      return res.status(500).send("Could not create user");
-    } else {
-      sessionInfo = await createSessions(user); //createSessions returns a promise
-      if (sessionInfo.token) {
-        //token created
-        console.log("session token created and sent in register route");
-        return res.status(200).json({
-          id: user._id,
-          token: sessionInfo.token,
-        });
-      }
-      return res.status(500).send("Could not create user");
+      console.log('error saving user to db', err);
+      return res.status(500).json({ message: 'Could not create user' });
     }
+    // sessionInfo = await createSessions(user); // createSessions returns a promise
+    /* 
+    if (sessionInfo.token) {
+      //token created
+      console.log('session token created and sent in register route');
+      return res.status(200).json({
+        id: user._id,
+        token: sessionInfo.token,
+      });
+    } 
+    */
+    // return res.status(500).json('Could not create user');
+    return res.status(200).json({
+      message: 'user created successfully',
+    });
   });
 });
 
