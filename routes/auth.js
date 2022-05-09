@@ -4,8 +4,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const redisClient = require('../redis');
 const { isValid, isValidRegistration } = require('../utils/validator');
-
-// const { isValid, isValidRegistration } = validator
+const {
+  createSessions,
+  generateAccessToken,
+  generateRefreshToken,
+} = require('../utils/generateTokens');
 
 const router = express.Router();
 
@@ -13,62 +16,56 @@ const router = express.Router();
 const jwt_access_expiration = '5d';
 const jwt_refresh_expiration = '120d';
 
+// a route to allow user to refresh their token
+router.post('/token', async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) return res.status(401).json({ message: 'Missing token' });
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const { id, email } = decoded;
+    // check redis for refresh token
+    const reply = await redisClient.get(id);
+    if (!reply) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    const { refreshToken: currentToken } = JSON.parse(reply);
 
-router.post('/token', (req, res) => {
-  const { refreshToken } = req.body
-  if (!refreshToken) return res.status(401).json({ message: 'Missing token' })
-  // TODO: check if refresh token is in redis 
-  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
-
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    const accessToken = generateAccessToken({ name: user.name });
-    res.json({ accessToken: accessToken });
-  });
+    if (refreshToken !== currentToken) {
+      console.log('attempt made to use invalidated token');
+      return res.status(403).json({ message: 'Invalid token' });
+    }
+    // return a new access token since refresh token is valid
+    const token = generateAccessToken(id, email);
+    return res.json({ token });
+  } catch (error) {
+    console.log('error refreshing token ', error);
+    return res.status(403).json({ message: 'Invalid token' });
+  }
 });
 
-
-// TODO: these functions should have a secret that changes every day
-function generateAccessToken(id, email) {
-  return jwt.sign({ id, email }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: jwt_access_expiration,
-  });
-}
-
-function generateRefreshToken(id, email) {
-  return jwt.sign({ id, email }, process.env.REFRESH_TOKEN_SECRET, {
-    expiresIn: jwt_refresh_expiration,
-  });
-}
-
-/* user must be defined 
-   returns refresh token and access token on success and null on failure
-*/
-const createSessions = async (user) => {
-  //create jwt and user data
-  const { _id, email } = user;
-  // generate refresh token
-  // const token = signToken(email);
-
+router.delete('/logout', async (req, res) => {
+  const { token } = req.body;
   try {
-    const accessToken = generateAccessToken(_id, email);
-    const refreshToken = generateRefreshToken(_id, email);
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    const { id, email } = decoded;
+    // check redis for refresh token
+    const reply = await redisClient.get(id);
+    if (!reply) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    const { refreshToken } = JSON.parse(reply);
 
-    // return new Promise((resolve, reject) => {
-    //save token in redis - note: _id is an object, so stringify needed
-    //set session to expire in 10 days
-
-    const reply = await redisClient.set(
-      _id,
-      JSON.stringify({ refreshToken, accessToken }),
-    );
-    console.log('reply from redis in createSessions: ', reply);
-    return { accessToken, refreshToken };
+    if (refreshToken !== token) {
+      console.log('attempt made to delete invalidated token');
+      return res.status(403).json({ message: 'Invalid token' });
+    }
+    await redisClient.del(id);
+    return res.status(204).json({ message: 'Logged out' });
   } catch (error) {
-    console.log('error creating sessions', error);
-    return null;
+    console.log('error logging out', error);
+    return res.status(403).json({ message: 'Invalid token' });
   }
-};
+});
 
 router.post('/login', async (req, res, next) => {
   const { authorization } = req.headers;
@@ -155,7 +152,7 @@ router.get('/getTokenInfo', async (req, res, next) => {
     return res.json({ message });
   } catch (err) {
     console.log('error in getTokenInfo: ', err);
-    if (err.name === "TokenExpiredError") console.log('gotcha!')
+    if (err.name === 'TokenExpiredError') console.log('gotcha!');
     return res.status(400).json({ message: 'error in getTokenInfo' });
   }
 });
