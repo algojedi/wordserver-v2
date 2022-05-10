@@ -6,6 +6,7 @@ const redisClient = require('../redis');
 const { isValid, isValidRegistration } = require('../utils/validator');
 const {
   createSessions,
+  updateAccessToken,
   generateAccessToken,
   generateRefreshToken,
 } = require('../utils/generateTokens');
