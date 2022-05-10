@@ -12,9 +12,6 @@ const {
 
 const router = express.Router();
 
-// timeout in seconds
-const jwt_access_expiration = '5d';
-const jwt_refresh_expiration = '120d';
 
 // a route to allow user to refresh their token
 router.post('/token', async (req, res) => {
