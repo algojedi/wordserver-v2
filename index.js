@@ -5,14 +5,16 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const wordRoutes = require('./routes/words');
-const redisClient = require('./redis');
+// const redisClient = require('./redis');
 const limiter = require('./utils/limiter');
+const RedisClient = require('./redis');
 
 require('dotenv').config();
 
 const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 const app = express();
+RedisClient.getInstance();
 
 if (process.env.NODE_ENV === 'production') {
   console.log('Running in :', process.env.NODE_ENV);

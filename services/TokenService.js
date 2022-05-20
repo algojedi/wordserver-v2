@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
+const RedisClient = require('../redis');
 
+// TODO: when to close redis connection?
 class TokenService {
 
   constructor(height, width) {
@@ -7,6 +9,7 @@ class TokenService {
     this.jwt_refresh_expiration = '120d';
     this.ACCESS_TOKEN = 'accessToken';
     this.REFRESH_TOKEN = 'refreshToken';
+    this.redisClient = RedisClient.getInstance();
   }
 
 
@@ -74,7 +77,9 @@ updateAccessToken = async (id, email) => {
    */
   delete(id) {
 		// TODO: delete session from redis .. but how to import into class?
-    return this.model.findByIdAndDelete(id).exec();
+    // return this.model.findByIdAndDelete(id).exec();
+    redisClient.delete(id);
+    redisClient.del(id)
   }
 
   /**
