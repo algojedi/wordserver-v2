@@ -1,15 +1,14 @@
-const redis = require('redis')
-
+const redis = require('redis');
 
 class RedisClient {
-  static _instance
+  static _instance;
 
   constructor() {
     this.connected = false;
     this.client = redis.createClient();
-    client.on('error', (err) => console.log('Redis Client Error', err));
+    // this.client.on('error', (err) => console.log('Redis Client Error', err));
 
-    client.connect((err) => {
+    this.client.connect((err) => {
       if (err) {
         console.log('Redis Client Error', err);
       } else {
@@ -25,16 +24,16 @@ class RedisClient {
       return this._instance;
     }
     console.log('new instance of RedisClient');
-    this._instance = new RedisClient()
+    this._instance = new RedisClient();
     return this._instance;
   }
 
-   getRedisClient() {
-        return this.client;
-    }
+  getRedisClient() {
+    return this.client;
+  }
 }
 
-export default RedisClient;
+module.exports = RedisClient;
 
 /*
 const redisClient = new RedisClient();

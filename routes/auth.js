@@ -10,9 +10,10 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require('../utils/generateTokens');
+const TokenService = require('../services/TokenService')
 
 const router = express.Router();
-
+const tokenService = new TokenService();
 
 // a route to allow user to refresh their token
 router.post('/token', async (req, res) => {
@@ -69,7 +70,7 @@ router.post('/login', async (req, res, next) => {
   const { authorization } = req.headers;
 
   if (authorization) {
-    // would have been set in middleware
+    // user id would have been set in middleware
     console.log('authorization header found : ', authorization);
     return res.json({
       // default status code is 200
@@ -81,6 +82,7 @@ router.post('/login', async (req, res, next) => {
 
   const { email, password } = req.body;
 
+  // TODO: factor out validation to middleware
   if (!isValid(email, password)) {
     console.log('invalid username/password');
     return res.status(400).json({ message: 'invalid username or password' });
@@ -96,7 +98,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ message: 'no such user' });
     }
     // if the login info is correct, create session
-    const sessionInfo = await createSessions(user);
+    const sessionInfo = await tokenService.createSessions(user._id, user.email);
     console.log('session info received in login : ', sessionInfo);
     if (sessionInfo) {
       return res.json({
@@ -106,7 +108,7 @@ router.post('/login', async (req, res, next) => {
         refreshToken: sessionInfo.refreshToken,
       });
     } else {
-      return res.status(400).json({ message: 'error in creating session' });
+      return res.status(400).json({ message: 'error creating session' });
     }
   } catch (err) {
     console.log('unexpected error: ', err);
@@ -116,6 +118,7 @@ router.post('/login', async (req, res, next) => {
 
 // a function that validates username/password and returns a promise
 // on resolve, should return the user
+// TODO: factor out to different module
 const handleSignIn = async (email, password) => {
   try {
     let user = await User.findOne({ email });
@@ -214,20 +217,8 @@ router.post('/register', async (req, res, next) => {
   user.save(async (err, user) => {
     if (err) {
       console.log('error saving user to db', err);
-      return res.status(500).json({ message: 'Could not create user' });
+      return res.status(500).json({ message: 'DB error: Could not create user' });
     }
-    // sessionInfo = await createSessions(user); // createSessions returns a promise
-    /* 
-    if (sessionInfo.token) {
-      //token created
-      console.log('session token created and sent in register route');
-      return res.status(200).json({
-        id: user._id,
-        token: sessionInfo.token,
-      });
-    } 
-    */
-    // return res.status(500).json('Could not create user');
     return res.status(200).json({
       message: 'user created successfully',
     });

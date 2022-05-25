@@ -4,12 +4,12 @@ const RedisClient = require('../redis');
 // TODO: when to close redis connection?
 class TokenService {
 
-  constructor(height, width) {
+  constructor() {
     this.jwt_access_expiration = '5m'; // '5d'; // TODO: change to '5d'
     this.jwt_refresh_expiration = '120d';
     this.ACCESS_TOKEN = 'accessToken';
     this.REFRESH_TOKEN = 'refreshToken';
-    this.redisClient = RedisClient.getInstance();
+    this.redisClient = RedisClient.getInstance().getRedisClient();
   }
 
 
@@ -34,7 +34,7 @@ updateAccessToken = async (id, email) => {
   try {
     const accessToken = this.generateAccessToken(id, email);
     // save token in redis - note: _id is an object, so stringify needed
-    const reply = await redisClient.hSet(_id, ACCESS_TOKEN, accessToken);
+    const reply = await this.redisClient.hSet(_id, ACCESS_TOKEN, accessToken);
     console.log('reply from redis in update access token: ', reply);
     return accessToken;
   } catch (error) {
@@ -48,19 +48,25 @@ updateAccessToken = async (id, email) => {
    * @param user {id, email} User to create a session for
    * @returns {accessToken, refreshToken} returns the access and refresh tokens or null on error
    */
- createSessions = async (user) => {
-  const { _id, email } = user;
+ createSessions = async (id, email) => {
   try {
-    const accessToken = this.generateAccessToken(_id, email);
-    const refreshToken = this.generateRefreshToken(_id, email);
-    // save token in redis - note: _id is an object, so stringify needed
-    const reply = await redisClient.hmset(
-      _id,
-      this.ACCESS_TOKEN,
-      accessToken,
-      this.REFRESH_TOKEN,
-      refreshToken,
-    );
+    const accessToken = this.generateAccessToken(id, email);
+    const refreshToken = this.generateRefreshToken(id, email);
+    // save token in redis - note: id is an object, so stringify needed
+    // const reply = await this.redisClient.HMSET(
+    //   id,
+    //   this.ACCESS_TOKEN,
+    //   accessToken,
+    //   this.REFRESH_TOKEN,
+    //   refreshToken,
+    // );
+
+    const reply = await this.redisClient.hSet(id, ...Object.entries({
+     id,
+     [this.ACCESS_TOKEN] : accessToken,
+     [this.REFRESH_TOKEN] : refreshToken
+    }))
+
     console.log('reply from redis in createSessions: ', reply);
     return { accessToken, refreshToken };
   } catch (error) {
@@ -78,8 +84,8 @@ updateAccessToken = async (id, email) => {
   delete(id) {
 		// TODO: delete session from redis .. but how to import into class?
     // return this.model.findByIdAndDelete(id).exec();
-    redisClient.delete(id);
-    redisClient.del(id)
+    // this.redisClient.delete(id);
+    this.redisClient.del(id)
   }
 
   /**
