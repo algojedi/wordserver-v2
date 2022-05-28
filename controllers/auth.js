@@ -137,3 +137,27 @@ exports.register = async (req, res, next) => {
     });
   });
 };
+
+/* delete refresh token from redis. Token should be validated via middleware */
+exports.logout =  async (req, res) => {
+  const { token } = req.body;
+  // TODO: token should be retrieved from authorization header
+  try {
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    const { id, email } = decoded;
+    // check redis for refresh token
+    const storedRefreshToken = await tokenService.getRefreshToken(id);
+    if (!storedRefreshToken) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    if (storedRefreshToken !== token) {
+      console.log('attempt made to delete invalidated token');
+      return res.status(403).json({ message: 'Invalid token' });
+    }
+    await tokenService.deleteTokens(id)
+    return res.status(204).json({ message: 'Logged out' });
+  } catch (error) {
+    console.log('error logging out', error);
+    return res.status(403).json({ message: 'Invalid token or server error' });
+  }
+}

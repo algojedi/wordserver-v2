@@ -38,6 +38,15 @@ class TokenService {
     }
   };
 
+  deleteTokens = async (id) => {
+    try {
+      return await this.redisClient.hDel(id, this.ACCESS_TOKEN, this.REFRESH_TOKEN);
+    } catch (error) {
+      console.log('error deleting tokens', error);
+      return null;
+    }
+  }
+
   /**
    * @description Create a new session for the provided user
    * @param user {id, email} User to create a session for
