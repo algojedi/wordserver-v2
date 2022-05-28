@@ -6,15 +6,17 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const wordRoutes = require('./routes/words');
 // const redisClient = require('./redis');
-const limiter = require('./utils/limiter');
+const limiter = require('./middleware/limiter');
+const myLimiter = require('./middleware/limiter');
 const RedisClient = require('./redis');
+const tokenCheck = require('./middleware/tokenCheck');
 
 require('dotenv').config();
 
 const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 const app = express();
-RedisClient.getInstance();
+const redisClient = RedisClient.getInstance(); // initialize redis client
 
 if (process.env.NODE_ENV === 'production') {
   console.log('Running in :', process.env.NODE_ENV);
@@ -28,24 +30,15 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 //---------- rate limiting --------------------//
-// TODO: remove all middleware into middleware folder
 app.use(limiter);
-
-let counter = 0; //simple ddos precaution
-//  apply to all requests, targetting each user
-
-const myLimiter = function (req, res, next) {
-  counter++;
-  console.log('Total requests ', counter);
-  //TODO: remove/reset this later
-  counter > 4000 ? res.json('ummm... something went wrong') : next();
-};
 //apply to all requests, regardless of user
 app.use(myLimiter);
 
 //---------------------------------------
 
 //save userid on req object if there's a token
+app.use(tokenCheck)
+/*
 app.use(function (req, res, next) {
   const { authorization } = req.headers; //authorization is the token
   if (!authorization) {
@@ -61,6 +54,7 @@ app.use(function (req, res, next) {
     next(); 
   });
 });
+*/
 
 
 app.use(authRoutes);
