@@ -1,4 +1,4 @@
-exports.isValid = function (email, password) {
+exports.isValidLogin = function (email, password) {
   return email && password;
 };
 
