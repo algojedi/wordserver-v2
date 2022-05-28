@@ -55,7 +55,6 @@ exports.login = async (req, res, next) => {
     return res.status(400).json({ message: 'invalid username or password' });
   }
 
-  console.log('about to authenticate creds for sign in');
   // no auth token
   try {
     // handleSignIn checks for user in db
@@ -70,7 +69,7 @@ exports.login = async (req, res, next) => {
     if (sessionInfo) {
       return res.json({
         success: true,
-        userId: user._id,
+        userId: user._id, // TODO: probably better not to send this
         accessToken: sessionInfo.accessToken,
         refreshToken: sessionInfo.refreshToken,
       });
