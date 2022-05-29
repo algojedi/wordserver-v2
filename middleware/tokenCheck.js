@@ -1,20 +1,22 @@
 const RedisClient = require("../redis");
+const TokenService = require('../services/TokenService');
 
-const redisClient = RedisClient.getInstance(); 
+const tokenService = new TokenService();
 
-module.exports = function (req, res, next) {
-	 console.log('tokenCheck middleware');
+module.exports = async (req, res, next) => {
   const { authorization } = req.headers; //authorization is the token
   if (!authorization) {
-    return next(); // user will not be able to access all routes
+      return res.status(403).json({ message: 'Authorization denied' });
   }
-  redisClient.get(authorization, (err, reply) => {
-    if (err || !reply) {
-      console.log('issue with token', err);
-      return res.status(400).json({ message: 'Authorization denied' });
-    }
-    console.log('reply from redis in middleware', reply);
-    req.userId = JSON.parse(reply);
-    next(); 
-  });
+  const splitAuthHeader = authorization.split(" ")
+  if (splitAuthHeader.length !== 2) {
+      return res.status(400).json({ message: 'Auth token incorrectly sent' });
+  }
+  const token = splitAuthHeader[1]; 
+  const user = await tokenService.decodeToken(token);
+  if (!user) {
+    return res.status(403).json({ message: 'Authorization denied' });
+  }
+  req.userId = user.id;
+  next()
 }

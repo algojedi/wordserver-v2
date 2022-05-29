@@ -9,20 +9,23 @@ const {
   generateRefreshToken,
 } = require('../utils/generateTokens');
 const authController = require('../controllers/auth');
+const tokenCheck = require('../middleware/tokenCheck');
 
 const router = express.Router();
 
 router.post('/register', authController.register); 
 // a route to allow user to refresh their token
-router.post('/token', authController.token)
-router.delete('/logout', authController.logout)
+router.post('/token', tokenCheck, authController.token)
+router.delete('/logout', tokenCheck, authController.logout)
 router.post('/login', authController.login)
+router.get('/test', tokenCheck, (req, res) => { 
+  console.log( { userIdRetrievedFromToken : req.userId })
+})
 
-router.get('/profile/:id', (req, res) => {
+router.get('/profile/:id', tokenCheck, (req, res) => {
   const userId = req.params.id;
   console.log('user id received in profile req: ', userId);
-  return User.findOne({ _id: userId }) //mongo id in User stored as _id
-
+  return User.findOne({ _id: userId }) 
     .populate('cart')
     .then((user) => {
       if (!user) {

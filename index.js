@@ -36,27 +36,6 @@ app.use(myLimiter);
 
 //---------------------------------------
 
-//save userid on req object if there's a token
-app.use(tokenCheck)
-/*
-app.use(function (req, res, next) {
-  const { authorization } = req.headers; //authorization is the token
-  if (!authorization) {
-    return next(); // user will not be able to access all routes
-  }
-  redisClient.get(authorization, (err, reply) => {
-    if (err || !reply) {
-      console.log('issue with token', err);
-      return res.status(400).json({ message: 'Authorization denied' });
-    }
-    console.log('reply from redis in middleware', reply);
-    req.userId = JSON.parse(reply);
-    next(); 
-  });
-});
-*/
-
-
 app.use(authRoutes);
 app.use(wordRoutes);
 

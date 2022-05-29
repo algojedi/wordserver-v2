@@ -11,7 +11,6 @@ exports.token = async (req, res) => {
   if (!refreshToken) return res.status(401).json({ message: 'Missing token' });
   try {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    console.log({ decoded });
     const { id, email } = decoded;
     // check redis for refresh token
     const storedRefreshToken = await tokenService.getRefreshToken(id);
@@ -38,7 +37,6 @@ exports.login = async (req, res, next) => {
 
   if (authorization) {
     // user id would have been set in middleware
-    console.log('authorization header found : ', authorization);
     return res.json({
       // default status code is 200
       success: true,
@@ -51,7 +49,6 @@ exports.login = async (req, res, next) => {
 
   // TODO: factor out validation to middleware
   if (!isValidLogin(email, password)) {
-    console.log('invalid username/password');
     return res.status(400).json({ message: 'invalid username or password' });
   }
 
@@ -59,13 +56,11 @@ exports.login = async (req, res, next) => {
   try {
     // handleSignIn checks for user in db
     const user = await handleSignIn(email, password);
-    console.log('user found ? : ', user);
     if (!user) {
       return res.status(400).json({ message: 'no such user' });
     }
     // if the login info is correct, create session
     const sessionInfo = await tokenService.createSessions(user._id, user.email);
-    console.log('session info received in login : ', sessionInfo);
     if (sessionInfo) {
       return res.json({
         success: true,
@@ -88,7 +83,6 @@ const handleSignIn = async (email, password) => {
   try {
     let user = await User.findOne({ email });
     if (!user) {
-      console.log('no user found by db');
       return null;
     }
     const isMatch = await bcrypt.compare(password, user.password);
@@ -104,7 +98,6 @@ exports.register = async (req, res, next) => {
   const { name, email, password } = req.body;
 
   if (!isValidRegistration(name, email, password)) {
-    console.log('invalid username/password');
     return res.status(400).json({ message: 'invalid username or password' });
   }
   // first check if user already exists
@@ -114,7 +107,6 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ message: 'user already exists' });
     }
   } catch (err) {
-    console.log('error checking db: ', err);
     return res.status(500).json({ message: 'database error' });
   }
 
@@ -151,7 +143,6 @@ exports.logout =  async (req, res) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
     if (storedRefreshToken !== token) {
-      console.log('attempt made to delete invalidated token');
       return res.status(403).json({ message: 'Invalid token' });
     }
     await tokenService.deleteTokens(id)
