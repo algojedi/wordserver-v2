@@ -7,6 +7,11 @@ class WordService {
       'https://od-api.oxforddictionaries.com/api/v2/entries/en-gb/';
   }
 
+  // TODO: don't need this if getwordpartanddefinitions is more modular
+  getWordFromDb = async (word) => {
+    return Wordef.findOne({ word });
+  }
+
   getWordPartAndDefinitions = async (word) => {
     const replyFromDB = await Wordef.findOne({ word }); // returns null if no matches
     if (replyFromDB) {
