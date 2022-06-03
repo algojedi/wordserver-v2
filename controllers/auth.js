@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { isValidLogin, isValidRegistration } = require('../utils/validator');
-const TokenService = require('../services/TokenService');
+const TokenService = require('../services/tokenService');
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 

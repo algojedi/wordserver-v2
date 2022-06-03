@@ -1,8 +1,9 @@
 const RedisClient = require("../redis");
-const TokenService = require('../services/TokenService');
+const TokenService = require('../services/tokenService');
 
 const tokenService = new TokenService();
 
+// attached userid to req if valid token
 module.exports = async (req, res, next) => {
   const { authorization } = req.headers; //authorization is the token
   if (!authorization) {

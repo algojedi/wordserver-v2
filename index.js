@@ -9,7 +9,6 @@ const wordRoutes = require('./routes/words');
 const limiter = require('./middleware/limiter');
 const myLimiter = require('./middleware/limiter');
 const RedisClient = require('./redis');
-const tokenCheck = require('./middleware/tokenCheck');
 
 require('dotenv').config();
 

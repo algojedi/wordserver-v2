@@ -1,110 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const axios = require("axios");
-const Wordef = require("../models/wordef");
-const User = require("../models/user");
+const wordController = require("../controllers/words");
+const tokenCheck = require("../middleware/tokenCheck");
 
-const API_URL = "https://od-api.oxforddictionaries.com/api/v2/entries/en-gb/";
+router.get("/word", tokenCheck, wordController.define) 
 
-//this method only runs if the word is NOT in the database
-//function returns object containing all relevant word info in WordDef schema layout, or null if no match found
-const fetchWordData = async (word) => {
-  let wordObject = {};
-
-  try {
-    wordObject = await axios.get(API_URL + word, {
-      headers: {
-        app_id: process.env.APP_ID,
-        app_key: process.env.API_KEY,
-      },
-    });
-  } catch (err) {
-    console.log("error when fetching word from api");
-    return null;
-  }
-  if ("error" in wordObject) {
-    console.log("error when fetching word from api");
-    //console.log(wordObject.error);
-    return null;
-  }
-
-  //first object in lexicalEntries array contains word definitions and examples
-  const wordInfo = wordObject.data.results[0].lexicalEntries[0];
-  const definitions = []; //for storing 1+ definitions of a word
-  let examplesPerDef = []; //there could be multiple examples for each word definition
-  //loop through senses array to populate definitions
-  wordInfo.entries[0].senses
-    .filter((data) => "examples" in data) //remove entries with no examples
-    .forEach((def) => {
-      //console.log('def is ', def);
-      def.examples.forEach((ex) => examplesPerDef.push(ex.text)); //extract string from object
-
-      definitions.push({
-        definition: def.definitions[0],
-        examples: [...examplesPerDef],
-      });
-      examplesPerDef = [];
-    });
-
-  const part = wordInfo.lexicalCategory.text;
-  // console.log("successful word retrieval: ", definitions);
-  return { word, part, definitions };
-};
-
-router.get("/define", async (req, res) => {
-  const word = req.query.word;
-  if (!word) {
-    return res.json("Enter a word");
-  }
-  //check mongo if word is already stored
-  try {
-    const wordQuery = await Wordef.findOne({ word }); //returns null if no matches
-    //return full word object if found in mongo
-    if (wordQuery) {
-      const { part, definitions } = wordQuery;
-      return res.send({
-        word,
-        part,
-        definitions,
-      });
-    }
-
-    //word not found in mongodb, therefore query api...
-    const wordInfo = await fetchWordData(word);
-
-    //store reference in DB
-    if (wordInfo) {
-      await addWordToDB(wordInfo);
-    } else {
-      console.log("error in api lookup: likely caused by non-word input");
-      res.status(400).send();
-    }
-    return res.json(wordInfo);
-  } catch (error) {
-    //console.error(error);
-    console.log("error in api lookup: likely caused by non-word input");
-    res.status(400).send();
-  }
-});
-
-const addWordToDB = ({ word, part, definitions }) => {
-  try {
-    const wordDef = new Wordef({
-      word,
-      part,
-      definitions,
-    });
-    wordDef.save().then((result) => {
-      //save() will save to DB
-      //		console.log("result from saving word to DB, ", result);
-    });
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-//precondition: word was searched previously
-router.post("/addWordToCart", async (req, res) => {
+// precondition: word was searched previously
+router.post("/word", tokenCheck, async (req, res) => {
   if (!req.userId) {
     //this route is only for logged in users
     return res.status(400).json("Authorization denied trying to add word");

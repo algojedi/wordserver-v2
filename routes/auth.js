@@ -1,13 +1,5 @@
 const express = require('express');
 const User = require('../models/user');
-const jwt = require('jsonwebtoken');
-const redisClient = require('../redis');
-const {
-  createSessions,
-  updateAccessToken,
-  generateAccessToken,
-  generateRefreshToken,
-} = require('../utils/generateTokens');
 const authController = require('../controllers/auth');
 const tokenCheck = require('../middleware/tokenCheck');
 
