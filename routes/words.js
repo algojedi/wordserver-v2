@@ -9,8 +9,6 @@ router.get("/word", tokenCheck, wordController.define)
 // precondition: word was searched previously
 router.post("/word", tokenCheck, wordController.addWordToCart)
 
-
-
 router.post("/removeWord", async (req, res) => {
   if (!req.userId) {
     // this case only here as precaution

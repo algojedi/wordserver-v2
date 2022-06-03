@@ -18,6 +18,7 @@ exports.addWordToCart = async (req, res) => {
       console.log("can't find user in mongo for some reason");
       return res.status(400).json('unable to find user in addWord route');
     }
+    console.log( { user })
     // find mongoose word object - must be here since it was previously searched
     const wordObj = await wordService.getWordFromDb(word);
     // console.log("return from mongo: ", wordObj);
@@ -25,7 +26,7 @@ exports.addWordToCart = async (req, res) => {
       return res.status(400).send("can't find word in db");
     }
     user.addToCart(wordObj._id);
-    // TODO: should not be giving word id away back to client
+    // id in wordobj needed for reference when deleting
     return res.json(wordObj); // word, part, definitions, _id
   } catch (err) {
     console.log(err);
