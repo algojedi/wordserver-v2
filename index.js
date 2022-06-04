@@ -15,7 +15,7 @@ require('dotenv').config();
 const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 const app = express();
-const redisClient = RedisClient.getInstance(); // initialize redis client
+RedisClient.getInstance(); // initialize redis client
 
 if (process.env.NODE_ENV === 'production') {
   console.log('Running in :', process.env.NODE_ENV);
@@ -53,10 +53,11 @@ app.get('/servicer-worker.js', (req, res) => {
   );
 });
 
+const PORT = process.env.PORT || 3001;
+
 mongoose
   .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((result) => {
-    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Mixing it up on port ${PORT}`);
     });

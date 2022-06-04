@@ -6,6 +6,26 @@ const jwt = require('jsonwebtoken');
 
 const tokenService = new TokenService();
 
+exports.getProfile = async (req, res) => {
+  const { userId } = req
+  console.log('user id received in profile req: ', userId);
+  return User.findOne({ _id: userId }) 
+    .populate('cart')
+    .then((user) => {
+      if (!user) {
+        return res.status(400).json({ message: 'incorrect user id' });
+      }
+      const { email, cart, name } = user;
+      return res.json({ email, cart, name });
+    }).catch((err) => {
+      console.log(err);
+      return res.status(500).json({ message: 'internal error' });
+    })
+
+
+
+}
+
 exports.token = async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) return res.status(401).json({ message: 'Missing token' });

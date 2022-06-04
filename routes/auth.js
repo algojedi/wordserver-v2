@@ -13,23 +13,7 @@ router.post('/login', authController.login)
 router.get('/test', tokenCheck, (req, res) => { 
   console.log( { userIdRetrievedFromToken : req.userId })
 })
-
-router.get('/profile', tokenCheck, (req, res) => {
-  const { userId } = req
-  console.log('user id received in profile req: ', userId);
-  return User.findOne({ _id: userId }) 
-    .populate('cart')
-    .then((user) => {
-      if (!user) {
-        return res.status(400).json({ message: 'incorrect user id' });
-      }
-      const { email, cart, name } = user;
-      return res.json({ email, cart, name });
-    }).catch((err) => {
-      console.log(err);
-      return res.status(500).json({ message: 'internal error' });
-    })
-});
+router.get('/profile', tokenCheck, authController.getProfile)
 
 
 module.exports = router;
