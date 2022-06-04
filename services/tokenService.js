@@ -51,7 +51,6 @@ class TokenService {
     try {
       const { id, email } = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
       const savedAccessToken = await this.getAccessToken(id);
-      console.log({ savedAccessToken });
       return savedAccessToken === token ? { id, email } : null;
     } catch (error) {
       console.log('invalid access token', error);
