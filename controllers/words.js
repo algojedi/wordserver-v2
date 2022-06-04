@@ -5,6 +5,22 @@ const UserService = require('../services/userService');
 const wordService = new WordService();
 const userService = new UserService();
 
+exports.removeWordFromCart = async (req, res) => {
+  let id = req.params.id
+  try {
+    const user = await userService.getUser(req.userId); 
+    if (!user) {
+      return res.status(404).json({ message : "unable to find user profile" });
+    }
+    // leaky abstraction ?
+    user.removeFromCart(id);
+    return res.status(200).json({ message : "success" });
+  } catch (e) {
+    console.log({ errorMessage: e.message });
+    res.status(500).json({ message : "oops... something went wrong" });
+  }
+}
+
 exports.addWordToCart = async (req, res) => {
   let { word } = req.body
   const { userId } = req
@@ -21,7 +37,6 @@ exports.addWordToCart = async (req, res) => {
     console.log( { user })
     // find mongoose word object - must be here since it was previously searched
     const wordObj = await wordService.getWordFromDb(word);
-    // console.log("return from mongo: ", wordObj);
     if (!wordObj) {
       return res.status(400).send("can't find word in db");
     }
@@ -30,6 +45,7 @@ exports.addWordToCart = async (req, res) => {
     return res.json(wordObj); // word, part, definitions, _id
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ message: 'internal error ... something went wrong' });
   }
 };
 
