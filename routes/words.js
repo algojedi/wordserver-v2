@@ -3,7 +3,7 @@ const router = express.Router();
 const wordController = require("../controllers/words");
 const tokenCheck = require("../middleware/tokenCheck");
 
-router.get("/word", tokenCheck, wordController.define) 
+router.get("/", tokenCheck, wordController.define) 
 
 // add word to user cart 
 // precondition: word was searched previously

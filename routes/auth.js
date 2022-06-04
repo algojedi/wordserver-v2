@@ -14,8 +14,8 @@ router.get('/test', tokenCheck, (req, res) => {
   console.log( { userIdRetrievedFromToken : req.userId })
 })
 
-router.get('/profile/:id', tokenCheck, (req, res) => {
-  const userId = req.params.id;
+router.get('/profile', tokenCheck, (req, res) => {
+  const { userId } = req
   console.log('user id received in profile req: ', userId);
   return User.findOne({ _id: userId }) 
     .populate('cart')
@@ -25,7 +25,10 @@ router.get('/profile/:id', tokenCheck, (req, res) => {
       }
       const { email, cart, name } = user;
       return res.json({ email, cart, name });
-    });
+    }).catch((err) => {
+      console.log(err);
+      return res.status(500).json({ message: 'internal error' });
+    })
 });
 
 
