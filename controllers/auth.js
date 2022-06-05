@@ -53,7 +53,7 @@ exports.token = async (req, res) => {
 };
 
 exports.login = async (req, res, next) => {
-  const { authorization } = req.headers;
+/*  const { authorization } = req.headers;
 
   if (authorization) {
     // user id would have been set in middleware
@@ -64,7 +64,7 @@ exports.login = async (req, res, next) => {
       token: authorization,
     });
   }
-
+ */
   const { email, password } = req.body;
 
   // TODO: factor out validation to middleware
@@ -72,7 +72,6 @@ exports.login = async (req, res, next) => {
     return res.status(400).json({ message: 'invalid username or password' });
   }
 
-  // no auth token
   try {
     // handleSignIn checks for user in db
     const user = await handleSignIn(email, password);

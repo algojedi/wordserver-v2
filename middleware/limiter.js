@@ -7,4 +7,5 @@ const limiter = rateLimit({
   headers: true,
 });
 
+console.log('limiter loaded?')
 module.exports = limiter;
