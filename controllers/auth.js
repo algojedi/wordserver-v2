@@ -22,12 +22,11 @@ exports.getProfile = async (req, res) => {
       return res.status(500).json({ message: 'internal error' });
     })
 
-
-
 }
 
 exports.token = async (req, res) => {
   const { refreshToken } = req.body;
+  console.log('refresh token received?: ', req.body);
   if (!refreshToken) return res.status(401).json({ message: 'Missing token' });
   try {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);

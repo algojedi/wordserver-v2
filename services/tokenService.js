@@ -3,7 +3,7 @@ const RedisClient = require('../redis');
 
 class TokenService {
   constructor() {
-    this.jwt_access_expiration = '5d';
+    this.jwt_access_expiration = '2s' // '5d';
     this.jwt_refresh_expiration = '120d';
     this.ACCESS_TOKEN = 'accessToken';
     this.REFRESH_TOKEN = 'refreshToken';
@@ -53,7 +53,7 @@ class TokenService {
       const savedAccessToken = await this.getAccessToken(id);
       return savedAccessToken === token ? { id, email } : null;
     } catch (error) {
-      console.log('invalid access token', error);
+      console.log('invalid access token', error.message);
       return null;
     }
   }

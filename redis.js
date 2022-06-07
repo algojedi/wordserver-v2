@@ -23,7 +23,6 @@ class RedisClient {
       console.log('old instance of RedisClient');
       return this._instance;
     }
-    console.log('new instance of RedisClient');
     this._instance = new RedisClient();
     return this._instance;
   }

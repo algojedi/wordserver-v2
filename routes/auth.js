@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post('/register', authController.register); 
 // a route to allow user to refresh their token
-router.post('/refresh', tokenCheck, authController.token)
+router.post('/refresh', authController.token)
 router.delete('/logout', tokenCheck, authController.logout)
 router.post('/login', authController.login)
 router.get('/test', tokenCheck, (req, res) => { 

@@ -28,23 +28,14 @@ const userSchema = new Schema({
 //wordId must be of type ObjectId 
 userSchema.methods.addToCart = function(wordId) { 
   
-  // const cartWordIndex = this.cart.findIndex(cw => {  //check to see if word is already in cart
-  //   return cw.wordId.toString() === wordId.toString();
-  // });
   for (var w of this.cart) {
     if (w.equals(wordId)) {
       console.log('word already exists in cart - user model schema')
       return; //word already exists in cart, hence do nothing
     }
   }
-  //return early if word already exists in cart
-  // if (cartWordIndex >= 0) {
-  //   console.log('word already exists in cart');
-  //   return;
-  // }
   const updatedCart = [...this.cart];
   updatedCart.push(wordId);
-  console.log('updated cart: ', updatedCart);
   this.cart = updatedCart;
   return this.save();
 }
