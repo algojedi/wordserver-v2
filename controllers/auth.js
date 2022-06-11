@@ -38,7 +38,7 @@ exports.token = async (req, res) => {
     }
     if (refreshToken !== storedRefreshToken) {
       console.log('attempt made to use invalidated token');
-      return res.status(403).json({ message: 'Invalid token' });
+      return res.status(401).json({ message: 'Invalid token' });
     }
     // return a new access token since refresh token is valid
     const token = await tokenService.updateAccessToken(id, email);
@@ -46,8 +46,8 @@ exports.token = async (req, res) => {
       ? res.json({ success: true, token })
       : res.status(500).json({ success: false, message: 'Error generating token' });
   } catch (error) {
-    console.log('error refreshing token ', error);
-    return res.status(403).json({ message: 'Invalid token' });
+    console.log('error refreshing token ', error.message);
+    return res.status(401).json({ message: 'Invalid token' });
   }
 };
 
@@ -161,12 +161,12 @@ exports.logout =  async (req, res) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
     if (storedRefreshToken !== token) {
-      return res.status(403).json({ message: 'Invalid token' });
+      return res.status(401).json({ message: 'Invalid token' });
     }
     await tokenService.deleteTokens(id)
     return res.status(204).json({ message: 'Logged out' });
   } catch (error) {
     console.log('error logging out', error);
-    return res.status(403).json({ message: 'Invalid token or server error' });
+    return res.status(401).json({ message: 'Invalid token or server error' });
   }
 }

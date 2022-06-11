@@ -1,10 +1,14 @@
 
-let counter = 0; //simple ddos precaution
+const maxTotalRequests = 1000
+let counter = 0
 //  apply to all requests, targetting each user
 module.exports = function (req, res, next) {
   counter++;
-
   console.log('Total requests ', counter);
   //TODO: remove/reset this later
-  counter > 4000 ? res.json('ummm... something went wrong') : next();
+  if (counter > maxTotalRequests) {
+    console.log('Too many damn requests: ' + counter)
+    process.exit(1);
+  }  
+   next();
 };
