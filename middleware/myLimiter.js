@@ -1,5 +1,5 @@
 
-const maxTotalRequests = 1000
+const maxTotalRequests = 1200 
 let counter = 0
 //  apply to all requests, targetting each user
 module.exports = function (req, res, next) {

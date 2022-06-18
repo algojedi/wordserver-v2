@@ -3,7 +3,7 @@ const RedisClient = require('../redis');
 
 class TokenService {
   constructor() {
-    this.jwt_access_expiration = '2s' // '5d';
+    this.jwt_access_expiration = '30d';
     this.jwt_refresh_expiration = '120d';
     this.ACCESS_TOKEN = 'accessToken';
     this.REFRESH_TOKEN = 'refreshToken';

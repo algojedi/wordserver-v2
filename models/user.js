@@ -34,6 +34,11 @@ userSchema.methods.addToCart = function(wordId) {
       return; //word already exists in cart, hence do nothing
     }
   }
+  // just a silly precauation to limit data transfer
+  if (this.cart.length > 30) {
+    console.log('cart is full - user model schema')
+    return
+  }
   const updatedCart = [...this.cart];
   updatedCart.push(wordId);
   this.cart = updatedCart;
