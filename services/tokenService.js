@@ -27,9 +27,16 @@ class TokenService {
     try {
       const accessToken = this.generateAccessToken(id, email);
       // save token in redis - note: _id is an object, so stringify needed
-      const reply = await this.redisClient.hSet(id, this.ACCESS_TOKEN, accessToken);
+      const reply = await this.redisClient.hSet(
+        id,
+        this.ACCESS_TOKEN,
+        accessToken,
+      );
       console.log('reply from redis in update access token: ', reply);
-      const realReplyUpdate = await this.redisClient.hGet(id, this.ACCESS_TOKEN);
+      const realReplyUpdate = await this.redisClient.hGet(
+        id,
+        this.ACCESS_TOKEN,
+      );
       console.log({ realReplyUpdate });
       return accessToken;
     } catch (error) {
@@ -40,12 +47,16 @@ class TokenService {
 
   deleteTokens = async (id) => {
     try {
-      return await this.redisClient.hDel(id, this.ACCESS_TOKEN, this.REFRESH_TOKEN);
+      return await this.redisClient.hDel(
+        id,
+        this.ACCESS_TOKEN,
+        this.REFRESH_TOKEN,
+      );
     } catch (error) {
       console.log('error deleting tokens', error);
       return null;
     }
-  }
+  };
 
   decodeToken = async (token) => {
     try {
@@ -56,7 +67,7 @@ class TokenService {
       console.log('invalid access token', error.message);
       return null;
     }
-  }
+  };
 
   /**
    * @description Create a new session for the provided user
@@ -69,20 +80,22 @@ class TokenService {
       const refreshToken = this.generateRefreshToken(id, email);
       // save token in redis - note: id is an object, so stringify needed
 
-      const tokenPair = {
-        [this.ACCESS_TOKEN]: accessToken,
-        [this.REFRESH_TOKEN]: refreshToken,
-      };
-      const reply = await this.redisClient.hSet(id, tokenPair);
+      // const reply = await this.redisClient.hSet(id, tokenPair);
 
-      console.log({ id });
-      const accessReply = await this.redisClient.hGet(id, this.ACCESS_TOKEN);
-      const refreshReply = await this.redisClient.hGet(id, this.REFRESH_TOKEN);
+      await this.redisClient.hSet(id + '', this.ACCESS_TOKEN, accessToken);
+      await this.redisClient.hSet(id + '', this.REFRESH_TOKEN, refreshToken);
+      const reply = await this.redisClient.hGetAll(id + '');
+
+      //const accessReply = await this.redisClient.hGet(id, this.ACCESS_TOKEN);
+      //const refreshReply = await this.redisClient.hGet(id, this.REFRESH_TOKEN);
       console.log('reply from redis in createSessions: ', reply);
-      console.log({ refreshReply, accessReply });
+      // console.log({ refreshReply, accessReply });
 
       // return { accessToken, refreshToken };
-      return tokenPair
+      return {
+        [this.ACCESS_TOKEN]: accessToken,
+        [this.REFRESH_TOKEN]: refreshToken,
+      }
     } catch (error) {
       console.log('error creating sessions', error);
       return null;
