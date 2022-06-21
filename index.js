@@ -29,9 +29,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 //---------- rate limiting --------------------//
-// TODO: must test to see if this is working
 app.use(limiter);
-//apply to all requests, regardless of user
 app.use(myLimiter);
 
 //---------------------------------------

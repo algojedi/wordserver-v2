@@ -80,18 +80,10 @@ class TokenService {
       const refreshToken = this.generateRefreshToken(id, email);
       // save token in redis - note: id is an object, so stringify needed
 
-      // const reply = await this.redisClient.hSet(id, tokenPair);
-
       await this.redisClient.hSet(id + '', this.ACCESS_TOKEN, accessToken);
       await this.redisClient.hSet(id + '', this.REFRESH_TOKEN, refreshToken);
       const reply = await this.redisClient.hGetAll(id + '');
 
-      //const accessReply = await this.redisClient.hGet(id, this.ACCESS_TOKEN);
-      //const refreshReply = await this.redisClient.hGet(id, this.REFRESH_TOKEN);
-      console.log('reply from redis in createSessions: ', reply);
-      // console.log({ refreshReply, accessReply });
-
-      // return { accessToken, refreshToken };
       return {
         [this.ACCESS_TOKEN]: accessToken,
         [this.REFRESH_TOKEN]: refreshToken,
