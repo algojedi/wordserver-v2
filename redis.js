@@ -5,9 +5,7 @@ class RedisClient {
 
   constructor() {
     this.connected = false;
-    this.client = redis.createClient();
-    // this.client.on('error', (err) => console.log('Redis Client Error', err));
-
+    this.client = redis.createClient({ password: process.env.REDIS_PW });
     this.client.connect((err) => {
       if (err) {
         console.log('Redis Client Error', err);
@@ -33,24 +31,3 @@ class RedisClient {
 }
 
 module.exports = RedisClient;
-
-/*
-const redisClient = new RedisClient();
-Object.freeze(redisClient);
-export default redisClient
-
-(async () => {
-  redisClient = redis.createClient();
-  redisClient.on('error', (err) => console.log('Redis Client Error', err));
-  await redisClient.connect();
-
-  await redisClient.set('key', 'foobar');
-  await redisClient.hSet('beatle', 'paul', 'mccartney');
-  const value = await redisClient.get('key');
-  const hVal = await redisClient.hGet('beatle', 'paul');
-  console.log({ value });
-  console.log({ hVal });
-})();
-
-module.exports = redisClient;
-*/

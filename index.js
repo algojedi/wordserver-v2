@@ -2,15 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
+require('dotenv').config();
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const wordRoutes = require('./routes/words');
-// const redisClient = require('./redis');
 const limiter = require('./middleware/limiter');
 const myLimiter = require('./middleware/myLimiter');
 const RedisClient = require('./redis');
 
-require('dotenv').config();
 
 const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
