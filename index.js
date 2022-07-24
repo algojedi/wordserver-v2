@@ -9,6 +9,7 @@ const wordRoutes = require('./routes/words');
 const limiter = require('./middleware/limiter');
 const myLimiter = require('./middleware/myLimiter');
 const RedisClient = require('./redis');
+const morgan = require('morgan')
 
 
 const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-ohht9.azure.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
@@ -16,12 +17,11 @@ const MONGO_URI = `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@clust
 const app = express();
 RedisClient.getInstance(); // initialize redis client
 
-if (process.env.NODE_ENV === 'production') {
-  console.log('Running in :', process.env.NODE_ENV);
-}
-
 app.use(cors());
 app.use(bodyParser.json());
+app.use(morgan('short'))
+
+console.log('Running in :', process.env.NODE_ENV);
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'wordsie', 'build')));
